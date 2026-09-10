@@ -400,9 +400,9 @@
 
             .header-actions-group {
                 display: none;
-                position: absolute;
-                right: 0;
-                top: calc(100% + 8px);
+                position: fixed;
+                top: 0;
+                left: 0;
                 flex-direction: column;
                 align-items: stretch;
                 width: 200px;
@@ -412,7 +412,7 @@
                 border-radius: 20px;
                 padding: 8px;
                 box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-                z-index: 70;
+                z-index: 200;
                 gap: 2px;
             }
             .header-actions-group.open { display: flex; }
@@ -544,15 +544,15 @@
                     <p class="text-xs lg:text-sm opacity-70">Controle financeiro com assistente inteligente</p>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
-                    <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 backdrop-blur-md p-1.5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm shrink-0">
-                        <button id="prevMonthBtn" class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition"><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
-                        <input type="month" id="currentMonthInput" class="bg-transparent font-semibold text-xs lg:text-sm outline-none px-1 cursor-pointer [color-scheme:dark]">
-                        <button id="nextMonthBtn" class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition"><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
-                    </div>
+                <div class="flex flex-col lg:flex-row lg:items-center gap-2 w-full lg:w-auto">
+                    <div class="flex items-center justify-between lg:justify-start gap-2 w-full lg:w-auto">
+                        <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 backdrop-blur-md p-1.5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm flex-1 lg:flex-none min-w-0">
+                            <button id="prevMonthBtn" class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition shrink-0"><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
+                            <input type="month" id="currentMonthInput" class="bg-transparent font-semibold text-xs lg:text-sm outline-none px-1 cursor-pointer [color-scheme:dark] w-full lg:w-auto min-w-0 text-center lg:text-left">
+                            <button id="nextMonthBtn" class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition shrink-0"><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+                        </div>
 
-                    <div class="flex items-center gap-2 shrink-0">
-                        <div class="relative">
+                        <div class="relative shrink-0">
                             <button id="moreActionsBtn" title="Mais ações" class="header-more-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                             <div id="actionsGroup" class="header-actions-group">
                                 <button id="themeToggleBtn" title="Alternar Tema" class="header-action-btn"><i class="fa-solid fa-moon" id="themeIcon"></i><span>Alternar Tema</span></button>
@@ -566,11 +566,11 @@
                                 <button id="privacyToggle" title="Privacidade" class="header-action-btn"><i class="fa-solid fa-eye" id="privacyIcon"></i><span>Privacidade</span></button>
                             </div>
                         </div>
-
-                        <button id="openNewTransactionBtn" class="px-4 py-2.5 lg:px-5 lg:py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-semibold shadow-[0_8px_20px_rgba(79,70,229,0.4)] transition flex items-center gap-2 text-xs lg:text-sm">
-                            <i class="fa-solid fa-plus text-xs"></i> <span class="hidden sm:inline">Nova Transação</span><span class="sm:hidden">Novo</span>
-                        </button>
                     </div>
+
+                    <button id="openNewTransactionBtn" class="w-full lg:w-auto px-4 py-2.5 lg:px-5 lg:py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-semibold shadow-[0_8px_20px_rgba(79,70,229,0.4)] transition flex items-center justify-center gap-2 text-xs lg:text-sm shrink-0">
+                        <i class="fa-solid fa-plus text-xs"></i> <span class="hidden sm:inline">Nova Transação</span><span class="sm:hidden">Novo</span>
+                    </button>
                 </div>
             </header>
 
@@ -1384,13 +1384,35 @@
 
         // Menu "mais ações" do cabeçalho (versão compacta para mobile)
         const headerActionsGroup = document.getElementById('actionsGroup');
-        document.getElementById('moreActionsBtn').addEventListener('click', (e) => {
+        const moreActionsBtn = document.getElementById('moreActionsBtn');
+
+        function positionHeaderActionsGroup() {
+            if (window.innerWidth >= 1024) return; // no desktop o menu é uma barra estática, não precisa posicionar
+            const rect = moreActionsBtn.getBoundingClientRect();
+            const menuWidth = headerActionsGroup.offsetWidth || 200;
+            const margin = 12;
+            let left = rect.right - menuWidth;
+            if (left < margin) left = margin;
+            if (left + menuWidth > window.innerWidth - margin) left = window.innerWidth - margin - menuWidth;
+            headerActionsGroup.style.top = (rect.bottom + 8) + 'px';
+            headerActionsGroup.style.left = left + 'px';
+        }
+
+        moreActionsBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            const willOpen = !headerActionsGroup.classList.contains('open');
             headerActionsGroup.classList.toggle('open');
+            if (willOpen) positionHeaderActionsGroup();
         });
         document.addEventListener('click', () => {
             headerActionsGroup.classList.remove('open');
         });
+        window.addEventListener('resize', () => {
+            if (headerActionsGroup.classList.contains('open')) positionHeaderActionsGroup();
+        });
+        window.addEventListener('scroll', () => {
+            if (headerActionsGroup.classList.contains('open')) positionHeaderActionsGroup();
+        }, true);
 
         document.getElementById('openNewProfileModal').addEventListener('click', () => {
             document.getElementById('profileModalTitle').textContent = 'Criar Novo Perfil';
