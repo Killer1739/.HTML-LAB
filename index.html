@@ -275,6 +275,158 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        /* ==================================================================
+           DOCK DE NAVEGAÇÃO INFERIOR (estilo "dock" para mobile/tablet),
+           reaproveitando as cores do projeto (glass-panel / nav-item)
+        ================================================================== */
+        .bottom-dock {
+            display: none; /* só aparece em telas <= 1024px, ver media query abaixo */
+        }
+
+        @media (max-width: 1024px) {
+            /* O menu horizontal antigo (dentro da sidebar) some, pois vira a dock inferior */
+            .sidebar .nav-menu {
+                display: none;
+            }
+
+            .bottom-dock {
+                display: flex;
+                position: fixed;
+                left: 50%;
+                bottom: max(14px, env(safe-area-inset-bottom));
+                transform: translateX(-50%);
+                z-index: 60;
+                max-width: calc(100vw - 24px);
+                padding: 8px 10px;
+                border-radius: 26px;
+            }
+            .bottom-dock-list {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 4px;
+                list-style: none;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .bottom-dock-list::-webkit-scrollbar { display: none; }
+            .bottom-dock .nav-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 3px;
+                min-width: 56px;
+                padding: 7px 6px;
+                border-radius: 18px;
+                white-space: nowrap;
+            }
+            .bottom-dock .nav-item i {
+                font-size: 15px;
+            }
+            .bottom-dock .nav-item span {
+                font-size: 9px;
+                font-weight: 600;
+            }
+
+            /* Garante espaço no fim da página para a dock flutuante não cobrir conteúdo */
+            .main-content {
+                padding-bottom: max(96px, calc(env(safe-area-inset-bottom) + 84px)) !important;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .bottom-dock .nav-item {
+                min-width: 50px;
+                padding: 6px 5px;
+            }
+            .bottom-dock .nav-item span {
+                font-size: 8.5px;
+            }
+        }
+
+        /* ==================================================================
+           MENU DE AÇÕES DO CABEÇALHO (Tema/Histórico/Limpar/Backup/Importar/Privacidade)
+           Desktop: barra de ícones (como antes). Mobile: menu "kebab" compacto.
+        ================================================================== */
+        .header-more-btn {
+            display: none; /* só aparece em telas menores, ver media query abaixo */
+        }
+
+        .header-actions-group {
+            display: flex;
+            align-items: center;
+            gap: 1.5px;
+            background: rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(12px) saturate(160%);
+            -webkit-backdrop-filter: blur(12px) saturate(160%);
+            padding: 6px;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+        .dark .header-actions-group {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .header-action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 12px;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .header-action-btn:hover { background: rgba(150, 150, 150, 0.12); }
+        .header-action-btn i { font-size: 12px; }
+        .header-action-btn span { display: none; } /* rótulos só aparecem no dropdown mobile */
+
+        @media (max-width: 1023px) {
+            .header-more-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border-radius: 14px;
+                background: rgba(0, 0, 0, 0.05);
+                border: 1px solid var(--glass-border);
+                cursor: pointer;
+            }
+            .dark .header-more-btn { background: rgba(255, 255, 255, 0.05); }
+            .header-more-btn:hover { background: rgba(150, 150, 150, 0.15); }
+
+            .header-actions-group {
+                display: none;
+                position: absolute;
+                right: 0;
+                top: calc(100% + 8px);
+                flex-direction: column;
+                align-items: stretch;
+                width: 200px;
+                background: var(--dropdown-bg);
+                backdrop-filter: blur(40px) saturate(200%);
+                -webkit-backdrop-filter: blur(40px) saturate(200%);
+                border-radius: 20px;
+                padding: 8px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+                z-index: 70;
+                gap: 2px;
+            }
+            .header-actions-group.open { display: flex; }
+
+            .header-action-btn {
+                justify-content: flex-start;
+                gap: 10px;
+                padding: 10px 12px;
+                width: 100%;
+            }
+            .header-action-btn i { width: 16px; text-align: center; font-size: 13px; }
+            .header-action-btn span { display: inline; font-size: 12px; font-weight: 500; }
+        }
+
         /* Alvos de toque maiores em telas pequenas — Apple recomenda mín. 44x44px */
         @media (max-width: 640px) {
             header button,
@@ -371,6 +523,19 @@
             </div>
         </aside>
 
+        <!-- DOCK DE NAVEGAÇÃO INFERIOR (somente mobile/tablet) -->
+        <nav id="bottomDock" class="bottom-dock glass-panel">
+            <ul class="bottom-dock-list">
+                <li><a class="nav-item active" data-target="view-painel" data-title="Visão Geral"><i class="fa-solid fa-border-all"></i><span>Painel</span></a></li>
+                <li><a class="nav-item" data-target="view-despesas" data-title="Gerenciamento de Despesas"><i class="fa-solid fa-arrow-trend-down"></i><span>Despesas</span></a></li>
+                <li><a class="nav-item" data-target="view-ganhos" data-title="Relatório de Ganhos"><i class="fa-solid fa-arrow-trend-up"></i><span>Ganhos</span></a></li>
+                <li><a class="nav-item" data-target="view-cartoes" data-title="Gerenciar Cartões"><i class="fa-regular fa-credit-card"></i><span>Cartões</span></a></li>
+                <li><a class="nav-item" data-target="view-metas" data-title="Metas & Objetivos"><i class="fa-solid fa-bullseye"></i><span>Metas</span></a></li>
+                <li><a class="nav-item" data-target="view-assinaturas" data-title="Assinaturas & Fixas"><i class="fa-solid fa-file-invoice-dollar"></i><span>Assinaturas</span></a></li>
+                <li><a class="nav-item" data-target="view-orcamentos" data-title="Orçamentos & Limites"><i class="fa-solid fa-sliders"></i><span>Orçamentos</span></a></li>
+            </ul>
+        </nav>
+
         <main class="main-content flex-1 flex flex-col gap-5">
             
             <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-1">
@@ -380,27 +545,32 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
-                    <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 backdrop-blur-md p-1.5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm">
+                    <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 backdrop-blur-md p-1.5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm shrink-0">
                         <button id="prevMonthBtn" class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition"><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
                         <input type="month" id="currentMonthInput" class="bg-transparent font-semibold text-xs lg:text-sm outline-none px-1 cursor-pointer [color-scheme:dark]">
                         <button id="nextMonthBtn" class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition"><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
                     </div>
 
-                    <div class="flex items-center gap-1.5 bg-black/5 dark:bg-white/5 backdrop-blur-md p-1.5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm">
-                        <button id="themeToggleBtn" title="Alternar Tema" class="p-2 rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition"><i class="fa-solid fa-moon text-xs" id="themeIcon"></i></button>
-                        <button id="historyBtn" title="Histórico" class="p-2 rounded-xl hover:bg-indigo-500/20 text-indigo-500 transition"><i class="fa-solid fa-chart-column text-xs"></i></button>
-                        <button id="clearMonthBtn" title="Limpar mês" class="p-2 rounded-xl hover:bg-rose-500/20 text-rose-500 transition"><i class="fa-solid fa-trash text-xs"></i></button>
-                        <button id="exportBtn" title="Backup" class="p-2 rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition"><i class="fa-solid fa-download text-xs"></i></button>
-                        <label title="Importar" class="p-2 rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer">
-                            <i class="fa-solid fa-upload text-xs"></i>
-                            <input type="file" id="importFile" accept=".json" class="hidden">
-                        </label>
-                        <button id="privacyToggle" title="Privacidade" class="p-2 rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition"><i class="fa-solid fa-eye text-xs" id="privacyIcon"></i></button>
-                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <div class="relative">
+                            <button id="moreActionsBtn" title="Mais ações" class="header-more-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                            <div id="actionsGroup" class="header-actions-group">
+                                <button id="themeToggleBtn" title="Alternar Tema" class="header-action-btn"><i class="fa-solid fa-moon" id="themeIcon"></i><span>Alternar Tema</span></button>
+                                <button id="historyBtn" title="Histórico" class="header-action-btn text-indigo-500"><i class="fa-solid fa-chart-column"></i><span>Histórico</span></button>
+                                <button id="clearMonthBtn" title="Limpar mês" class="header-action-btn text-rose-500"><i class="fa-solid fa-trash"></i><span>Limpar mês</span></button>
+                                <button id="exportBtn" title="Backup" class="header-action-btn"><i class="fa-solid fa-download"></i><span>Backup (exportar)</span></button>
+                                <label title="Importar" class="header-action-btn">
+                                    <i class="fa-solid fa-upload"></i><span>Importar</span>
+                                    <input type="file" id="importFile" accept=".json" class="hidden">
+                                </label>
+                                <button id="privacyToggle" title="Privacidade" class="header-action-btn"><i class="fa-solid fa-eye" id="privacyIcon"></i><span>Privacidade</span></button>
+                            </div>
+                        </div>
 
-                    <button id="openNewTransactionBtn" class="px-4 py-2.5 lg:px-5 lg:py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-semibold shadow-[0_8px_20px_rgba(79,70,229,0.4)] transition flex items-center gap-2 text-xs lg:text-sm">
-                        <i class="fa-solid fa-plus text-xs"></i> <span class="hidden sm:inline">Nova Transação</span><span class="sm:hidden">Novo</span>
-                    </button>
+                        <button id="openNewTransactionBtn" class="px-4 py-2.5 lg:px-5 lg:py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-semibold shadow-[0_8px_20px_rgba(79,70,229,0.4)] transition flex items-center gap-2 text-xs lg:text-sm">
+                            <i class="fa-solid fa-plus text-xs"></i> <span class="hidden sm:inline">Nova Transação</span><span class="sm:hidden">Novo</span>
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -1212,6 +1382,16 @@
             userDropdownMenu.classList.add('hidden');
         });
 
+        // Menu "mais ações" do cabeçalho (versão compacta para mobile)
+        const headerActionsGroup = document.getElementById('actionsGroup');
+        document.getElementById('moreActionsBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            headerActionsGroup.classList.toggle('open');
+        });
+        document.addEventListener('click', () => {
+            headerActionsGroup.classList.remove('open');
+        });
+
         document.getElementById('openNewProfileModal').addEventListener('click', () => {
             document.getElementById('profileModalTitle').textContent = 'Criar Novo Perfil';
             document.getElementById('profileModalMode').value = 'create';
@@ -1313,11 +1493,10 @@
         navItems.forEach(item => {
             item.addEventListener('click', function(e) {
                 e.preventDefault();
-                navItems.forEach(nav => nav.classList.remove('active'));
                 viewSections.forEach(view => view.classList.remove('active'));
                 
-                this.classList.add('active');
                 const targetId = this.getAttribute('data-target');
+                navItems.forEach(nav => nav.classList.toggle('active', nav.getAttribute('data-target') === targetId));
                 document.getElementById(targetId).classList.add('active');
                 pageTitle.innerText = this.getAttribute('data-title');
 
