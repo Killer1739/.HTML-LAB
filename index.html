@@ -3041,8 +3041,33 @@
             });
         }
 
-        function exportData() {
-            const dl = document.createElement('a'); dl.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dbData, null, 2))); dl.setAttribute("download", `findash_backup_${currentMonth}.json`); document.body.appendChild(dl); dl.click(); dl.remove();
+        async function exportData() {
+            const fileName = `findash_backup_${currentMonth}.json`;
+            const blob = new Blob([JSON.stringify(dbData, null, 2)], { type: 'application/json' });
+
+            // No iOS, quando o site é adicionado à Tela de Início (modo "standalone"), não existe
+            // interface do Safari para processar downloads — por isso usamos a folha de
+            // compartilhamento nativa (Web Share API), que permite "Salvar em Arquivos".
+            try {
+                const file = new File([blob], fileName, { type: 'application/json' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: 'Backup FinDash' });
+                    return;
+                }
+            } catch (err) {
+                if (err && err.name === 'AbortError') return; // usuário cancelou o compartilhamento
+                // qualquer outro erro cai no fallback abaixo
+            }
+
+            // Fallback para navegadores comuns (Safari em aba normal, Chrome, etc.)
+            const url = URL.createObjectURL(blob);
+            const dl = document.createElement('a');
+            dl.href = url;
+            dl.download = fileName;
+            document.body.appendChild(dl);
+            dl.click();
+            dl.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
         function importData(e) {
