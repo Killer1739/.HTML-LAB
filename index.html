@@ -261,7 +261,7 @@
            quando o teclado do iOS abre ou durante o bounce de rolagem */
         #profileModal, #profileLoginModal, #novaMetaModal, #contribuirMetaModal,
         #novoCartaoModal, #novaTransacaoModal, #historyModal, #editModal,
-        #novaAssinaturaModal, #categoryModal, #infoModal {
+        #novaAssinaturaModal, #categoryModal, #infoModal, #githubSyncModal {
             padding-top: max(16px, env(safe-area-inset-top));
             padding-bottom: max(16px, env(safe-area-inset-bottom));
             overscroll-behavior: contain;
@@ -269,7 +269,7 @@
         #profileModal > .glass-panel, #profileLoginModal > .glass-panel, #novaMetaModal > .glass-panel,
         #contribuirMetaModal > .glass-panel, #novoCartaoModal > .glass-panel, #novaTransacaoModal > .glass-panel,
         #historyModal > .glass-panel, #editModal > .glass-panel, #novaAssinaturaModal > .glass-panel,
-        #categoryModal > .glass-panel, #infoModal > .glass-panel {
+        #categoryModal > .glass-panel, #infoModal > .glass-panel, #githubSyncModal > .glass-panel {
             max-height: 90dvh;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
@@ -563,6 +563,7 @@
                                     <i class="fa-solid fa-upload"></i><span>Importar</span>
                                     <input type="file" id="importFile" accept=".json" class="hidden">
                                 </label>
+                                <button id="githubSyncBtn" title="Sincronizar com GitHub" class="header-action-btn"><i class="fa-brands fa-github"></i><span>Sincronizar GitHub</span></button>
                                 <button id="privacyToggle" title="Privacidade" class="header-action-btn"><i class="fa-solid fa-eye" id="privacyIcon"></i><span>Privacidade</span></button>
                             </div>
                         </div>
@@ -626,7 +627,10 @@
                             <div class="w-7 h-7 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-arrow-trend-up text-[10px]"></i></div>
                         </div>
                         <h2 class="text-lg sm:text-xl lg:text-2xl font-bold truncate" id="totalExpensesDisplay">R$ 0,00</h2>
-                        <p class="text-[11px] mt-1 opacity-75"><span id="expensePercentDisplay" class="font-medium text-rose-500">0%</span> da renda</p>
+                        <div class="flex flex-col mt-1">
+                            <p class="text-[11px] opacity-75"><span id="expensePercentDisplay" class="font-medium text-rose-500">0%</span> da renda</p>
+                            <p class="text-[10px] opacity-60 mt-0.5" title="De domingo a sábado da semana atual"><i class="fa-solid fa-calendar-week text-[9px] mr-1"></i>Nesta semana: <span id="weeklySpentDisplay" class="font-medium text-rose-400">R$ 0,00</span></p>
+                        </div>
                     </div>
 
                     <div class="glass-panel p-4 lg:p-5 flex flex-col justify-between relative overflow-hidden">
@@ -726,6 +730,62 @@
                         </div>
                     </div>
                 </section>
+                
+                <section class="glass-panel p-4 lg:p-5 w-full flex flex-col gap-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <h3 class="text-base font-bold">Evolução do Patrimônio (Saldo)</h3>
+                        <div class="flex gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl">
+                            <button type="button" id="nwTab6m" class="px-3 py-1 rounded-lg bg-indigo-600 text-white text-[10px] transition shadow-sm">6 Meses</button>
+                            <button type="button" id="nwTab12m" class="px-3 py-1 rounded-lg opacity-70 text-[10px] transition hover:opacity-100">12 Meses</button>
+                        </div>
+                    </div>
+                    <div class="relative h-56 sm:h-64 w-full">
+                        <canvas id="netWorthChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- PROJEÇÃO FUTURA COM TABELA E GRÁFICO -->
+                <section class="glass-panel p-4 lg:p-5 w-full flex flex-col gap-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                            <h3 class="text-base font-bold flex items-center gap-2">Projeção Futura <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i></h3>
+                            <p class="text-[11px] opacity-70" id="projectionSubtitle">Baseado no seu padrão de economia recente</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <!-- Alternar visualização (Gráfico / Tabela) -->
+                            <div class="flex gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl">
+                                <button type="button" id="projViewChart" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] transition shadow-sm" title="Ver Gráfico"><i class="fa-solid fa-chart-line"></i></button>
+                                <button type="button" id="projViewTable" class="px-2.5 py-1.5 rounded-lg opacity-70 text-[10px] transition hover:opacity-100" title="Ver Tabela"><i class="fa-solid fa-table"></i></button>
+                            </div>
+                            <!-- Alternar tempo -->
+                            <div class="flex gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl">
+                                <button type="button" id="projTab6m" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] transition shadow-sm">6 Meses</button>
+                                <button type="button" id="projTab12m" class="px-3 py-1.5 rounded-lg opacity-70 text-[10px] transition hover:opacity-100">12 Meses</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Wrapper do Gráfico -->
+                    <div id="projectionChartWrapper" class="relative h-56 sm:h-64 w-full">
+                        <canvas id="projectionChart"></canvas>
+                    </div>
+                    
+                    <!-- Wrapper da Tabela (Oculto por padrão) -->
+                    <div id="projectionTableWrapper" class="hidden relative h-56 sm:h-64 w-full overflow-y-auto pr-2">
+                        <table class="w-full text-left text-xs">
+                            <thead class="sticky top-0 bg-[var(--dropdown-bg)] backdrop-blur-xl border-b border-black/10 dark:border-white/10 opacity-80 z-10">
+                                <tr>
+                                    <th class="py-2.5 px-2">Período</th>
+                                    <th class="py-2.5 px-2 text-right">Saldo Projetado</th>
+                                    <th class="py-2.5 px-2 text-right">Evolução Acumulada</th>
+                                </tr>
+                            </thead>
+                            <tbody id="projectionTableBody">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
 
             <!-- ==============================================
@@ -756,6 +816,13 @@
                                 <p class="text-xs opacity-70">Sem despesas no período</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 lg:p-5 w-full">
+                    <h3 class="text-base font-bold mb-3">Comparativo de Gastos por Categoria (Mês Atual vs Anterior)</h3>
+                    <div class="relative h-64 w-full">
+                        <canvas id="categoryComparisonChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -935,6 +1002,56 @@
                 </div>
                 <button type="submit" class="w-full py-3 mt-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-xs shadow-lg transition">Salvar Perfil</button>
             </form>
+        </div>
+    </div>
+
+    <!-- GITHUB SYNC MODAL -->
+    <div id="githubSyncModal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] hidden flex justify-center items-center opacity-0 transition-opacity duration-300 p-4">
+        <div class="glass-panel w-full max-w-sm p-5 transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-brands fa-github"></i> Sincronizar com GitHub</h3>
+                <button id="closeGithubSyncModal" class="opacity-70 hover:opacity-100 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <p class="text-[11px] opacity-70 mb-4 leading-relaxed">
+                Seus dados são salvos como um arquivo JSON num repositório seu no GitHub. Use um <strong>token de acesso pessoal (fine-grained)</strong>, com permissão de "Contents: Read and write" restrita apenas a esse repositório. O token fica salvo somente neste navegador — não use em computadores/celulares compartilhados.
+            </p>
+
+            <form id="githubSyncForm" class="space-y-3">
+                <div>
+                    <label class="block text-xs opacity-70 mb-1">Personal Access Token</label>
+                    <input type="password" id="ghToken" placeholder="ghp_..." class="w-full px-3.5 py-2.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl text-xs outline-none focus:border-indigo-500 transition">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs opacity-70 mb-1">Usuário/Org</label>
+                        <input type="text" id="ghOwner" placeholder="seu-usuario" class="w-full px-3.5 py-2.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl text-xs outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs opacity-70 mb-1">Repositório</label>
+                        <input type="text" id="ghRepo" placeholder="meus-backups" class="w-full px-3.5 py-2.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl text-xs outline-none focus:border-indigo-500 transition">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs opacity-70 mb-1">Branch</label>
+                        <input type="text" id="ghBranch" placeholder="main" class="w-full px-3.5 py-2.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl text-xs outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs opacity-70 mb-1">Caminho do arquivo</label>
+                        <input type="text" id="ghPath" placeholder="findash-backup.json" class="w-full px-3.5 py-2.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl text-xs outline-none focus:border-indigo-500 transition">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 rounded-2xl font-semibold text-xs transition">Salvar configurações</button>
+            </form>
+
+            <div class="grid grid-cols-2 gap-2 mt-3">
+                <button id="ghPushBtn" class="py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-xs shadow-lg transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-cloud-arrow-up"></i> Enviar agora</button>
+                <button id="ghPullBtn" class="py-3 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 rounded-2xl font-bold text-xs transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-cloud-arrow-down"></i> Baixar agora</button>
+            </div>
+
+            <p id="githubSyncStatus" class="text-xs mt-3 opacity-70"></p>
         </div>
     </div>
 
@@ -1213,6 +1330,15 @@
     </div>
 
     <script>
+        // --- FUNÇÃO AUXILIAR DE DATA LOCAL CORRETA ---
+        function getLocalTodayDate() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
         // --- THEME MANAGER ---
         const themeToggleBtn = document.getElementById('themeToggleBtn');
         const themeIcon = document.getElementById('themeIcon');
@@ -1584,6 +1710,11 @@
         let timelineChartInstance = null;
         let expensesCategoryChartInstance = null;
         let gainsCategoryChartInstance = null;
+        let netWorthChartInstance = null;
+        let categoryComparisonChartInstance = null;
+        let projectionChartInstance = null;
+        let netWorthSpan = 6;
+        let projectionSpan = 6;
         const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316'];
 
         const paymentIcons = {
@@ -1617,6 +1748,7 @@
         
         const totalExpensesDisplay = document.getElementById('totalExpensesDisplay');
         const expensePercentDisplay = document.getElementById('expensePercentDisplay');
+        const weeklySpentDisplay = document.getElementById('weeklySpentDisplay');
         const remainingBalanceDisplay = document.getElementById('remainingBalanceDisplay');
         const savingsPercentDisplay = document.getElementById('savingsPercentDisplay');
         
@@ -1758,7 +1890,7 @@
             }
 
             const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
+            const dateStr = getLocalTodayDate();
             const timeStr = now.toTimeString().split(' ')[0].slice(0, 5);
 
             return {
@@ -1881,17 +2013,18 @@
 
             subTabExtrato.addEventListener('click', () => {
                 activeSubTab = 'extrato';
-                subTabExtrato.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs transition";
-                subTabRaioX.className = "px-2.5 py-1 rounded-lg opacity-70 text-xs transition hover:opacity-100";
+                subTabExtrato.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white transition";
+                subTabRaioX.className = "px-2.5 py-1 rounded-lg opacity-70 transition hover:opacity-100";
                 extratoView.classList.remove('hidden');
                 searchWrapper.style.display = 'flex';
                 raioXView.classList.add('hidden');
+                raioXView.style.display = 'none'; // Correção para não manter o 'flex' visível
             });
 
             subTabRaioX.addEventListener('click', () => {
                 activeSubTab = 'raiox';
-                subTabRaioX.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs transition";
-                subTabExtrato.className = "px-2.5 py-1 rounded-lg opacity-70 text-xs transition hover:opacity-100";
+                subTabRaioX.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white transition";
+                subTabExtrato.className = "px-2.5 py-1 rounded-lg opacity-70 transition hover:opacity-100";
                 extratoView.classList.add('hidden');
                 searchWrapper.style.display = 'none';
                 raioXView.classList.remove('hidden');
@@ -1912,6 +2045,59 @@
                 raioXTabGain.className = "px-3 py-1 rounded-xl bg-emerald-500 text-white text-[10px] transition shadow-sm";
                 raioXTabExpense.className = "px-3 py-1 rounded-xl opacity-70 text-[10px] transition hover:opacity-100";
                 renderRaioXView();
+            });
+
+            const nwTab6m = document.getElementById('nwTab6m');
+            const nwTab12m = document.getElementById('nwTab12m');
+
+            nwTab6m.addEventListener('click', () => {
+                netWorthSpan = 6;
+                nwTab6m.className = "px-3 py-1 rounded-lg bg-indigo-600 text-white text-[10px] transition shadow-sm";
+                nwTab12m.className = "px-3 py-1 rounded-lg opacity-70 text-[10px] transition hover:opacity-100";
+                updateNetWorthChart();
+            });
+
+            nwTab12m.addEventListener('click', () => {
+                netWorthSpan = 12;
+                nwTab12m.className = "px-3 py-1 rounded-lg bg-indigo-600 text-white text-[10px] transition shadow-sm";
+                nwTab6m.className = "px-3 py-1 rounded-lg opacity-70 text-[10px] transition hover:opacity-100";
+                updateNetWorthChart();
+            });
+
+            // Lógica de alternância da Projeção Futura (Tempo & Visualização)
+            const projTab6m = document.getElementById('projTab6m');
+            const projTab12m = document.getElementById('projTab12m');
+            const projViewChartBtn = document.getElementById('projViewChart');
+            const projViewTableBtn = document.getElementById('projViewTable');
+            const projChartWrapper = document.getElementById('projectionChartWrapper');
+            const projTableWrapper = document.getElementById('projectionTableWrapper');
+            
+            projTab6m.addEventListener('click', () => {
+                projectionSpan = 6;
+                projTab6m.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] transition shadow-sm";
+                projTab12m.className = "px-3 py-1.5 rounded-lg opacity-70 text-[10px] transition hover:opacity-100";
+                updateProjectionChart();
+            });
+            
+            projTab12m.addEventListener('click', () => {
+                projectionSpan = 12;
+                projTab12m.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] transition shadow-sm";
+                projTab6m.className = "px-3 py-1.5 rounded-lg opacity-70 text-[10px] transition hover:opacity-100";
+                updateProjectionChart();
+            });
+
+            projViewChartBtn.addEventListener('click', () => {
+                projViewChartBtn.className = "px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] transition shadow-sm";
+                projViewTableBtn.className = "px-2.5 py-1.5 rounded-lg opacity-70 text-[10px] transition hover:opacity-100";
+                projChartWrapper.classList.remove('hidden');
+                projTableWrapper.classList.add('hidden');
+            });
+
+            projViewTableBtn.addEventListener('click', () => {
+                projViewTableBtn.className = "px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] transition shadow-sm";
+                projViewChartBtn.className = "px-2.5 py-1.5 rounded-lg opacity-70 text-[10px] transition hover:opacity-100";
+                projTableWrapper.classList.remove('hidden');
+                projChartWrapper.classList.add('hidden');
             });
 
             document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonthOffset(-1));
@@ -2015,6 +2201,7 @@
             setupCategorySelect();
             setupPaymentMethodsSelect();
             setupModals();
+            setupGithubSync();
             
             Chart.defaults.color = htmlElement.classList.contains('dark') ? '#cbd5e1' : '#475569';
             Chart.defaults.font.family = "'Sora', sans-serif";
@@ -2023,7 +2210,7 @@
         }
 
         function setDefaultDateForCurrentMonth() {
-            const todayStr = new Date().toISOString().slice(0, 10);
+            const todayStr = getLocalTodayDate();
             dateInput.value = todayStr.startsWith(currentMonth) ? todayStr : `${currentMonth}-01`;
         }
 
@@ -2064,6 +2251,187 @@
             if (!m) return 0;
             const base = m.accountBalance !== undefined ? m.accountBalance : 2000;
             return base + (m.gains || []).reduce((acc, curr) => acc + curr.value, 0) - (m.expenses || []).reduce((acc, curr) => acc + curr.value, 0);
+        }
+
+        function getAverageSavings() {
+            const sortedMonths = Object.keys(dbData.months).filter(m => m <= currentMonth).sort().reverse();
+            let totalSavings = 0;
+            let count = 0;
+            
+            // Pega os últimos 3 meses pra basear a projeção de economia média (fluxo de caixa)
+            for(let i = 0; i < Math.min(3, sortedMonths.length); i++) {
+                const mStr = sortedMonths[i];
+                const inc = getMonthTotalIncome(mStr);
+                const exp = (dbData.months[mStr].expenses || []).reduce((a, b) => a + b.value, 0);
+                totalSavings += (inc - exp);
+                count++;
+            }
+            
+            // Se não tiver nenhum histórico no DB, projeta com base no mês atual
+            if (count === 0) {
+                const currentInc = getMonthTotalIncome(currentMonth);
+                const currentExp = (dbData.months[currentMonth].expenses || []).reduce((a, b) => a + b.value, 0);
+                return currentInc - currentExp;
+            }
+            return totalSavings / count;
+        }
+
+        function updateProjectionChart() {
+            const ctx = document.getElementById('projectionChart').getContext('2d');
+            const avgSavings = getAverageSavings();
+            const initialBalance = getMonthFinalAccountBalance(currentMonth);
+            let currentBalance = initialBalance;
+            
+            const subtitleEl = document.getElementById('projectionSubtitle');
+            if (avgSavings > 0) {
+                subtitleEl.innerHTML = `Média de economia: <span class="text-emerald-500 font-bold">+${formatCurrency(avgSavings)}</span>/mês.`;
+            } else if (avgSavings < 0) {
+                subtitleEl.innerHTML = `Média de déficit: <span class="text-rose-500 font-bold">${formatCurrency(avgSavings)}</span>/mês. Atenção!`;
+            } else {
+                subtitleEl.innerHTML = `Baseado na sua movimentação atual (estável).`;
+            }
+            
+            const labels = [];
+            const data = [];
+            
+            let [y, m] = currentMonth.split('-').map(Number);
+            
+            for(let i = 1; i <= projectionSpan; i++) {
+                let nextM = m + i;
+                let nextY = y;
+                while(nextM > 12) { nextM -= 12; nextY++; }
+                
+                const date = new Date(nextY, nextM - 1);
+                const label = date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', '');
+                labels.push(label);
+                
+                currentBalance += avgSavings;
+                data.push(currentBalance);
+            }
+            
+            // Atualizar o Gráfico
+            const tickColor = htmlElement.classList.contains('dark') ? '#cbd5e1' : '#475569';
+            const gridColor = htmlElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+            const isPositive = avgSavings >= 0;
+            const lineColor = isPositive ? '#10b981' : '#f43f5e'; // emerald or rose
+            
+            if (projectionChartInstance) {
+                projectionChartInstance.data.labels = labels;
+                projectionChartInstance.data.datasets[0].data = data;
+                projectionChartInstance.data.datasets[0].borderColor = lineColor;
+                projectionChartInstance.data.datasets[0].pointBackgroundColor = lineColor;
+                projectionChartInstance.options.scales.x.ticks.color = tickColor;
+                projectionChartInstance.options.scales.y.ticks.color = tickColor;
+                projectionChartInstance.options.scales.y.grid.color = gridColor;
+                projectionChartInstance.update();
+            } else {
+                projectionChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Saldo Projetado',
+                            data: data,
+                            borderColor: lineColor,
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointBackgroundColor: lineColor,
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            fill: false,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return formatCurrency(context.raw);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: tickColor, font: { size: 10 } },
+                                grid: { display: false }
+                            },
+                            y: {
+                                ticks: { 
+                                    color: tickColor, 
+                                    font: { size: 10 },
+                                    callback: function(value) {
+                                        return new Intl.NumberFormat('pt-BR', { notation: "compact", compactDisplay: "short" }).format(value);
+                                    }
+                                },
+                                grid: { color: gridColor }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index',
+                        },
+                    }
+                });
+            }
+
+            // Atualizar a Tabela
+            const tbody = document.getElementById('projectionTableBody');
+            tbody.innerHTML = '';
+            
+            for(let i = 0; i < labels.length; i++) {
+                let diff = data[i] - initialBalance;
+                let diffClass = diff >= 0 ? 'text-emerald-500' : 'text-rose-500';
+                let diffSign = diff >= 0 ? '+' : '';
+                
+                tbody.innerHTML += `
+                    <tr class="border-b border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 transition">
+                        <td class="py-2.5 px-2 capitalize font-medium text-[11px] opacity-80">${labels[i]}</td>
+                        <td class="py-2.5 px-2 text-right font-bold text-cyan-500 text-[11px]">${formatCurrency(data[i])}</td>
+                        <td class="py-2.5 px-2 text-right font-semibold text-[11px] ${diffClass}">${diffSign}${formatCurrency(diff)}</td>
+                    </tr>
+                `;
+            }
+        }
+
+        function getNetWorthHistory(monthsCount) {
+            const history = [];
+            let [currentYear, currentMonthNum] = currentMonth.split('-').map(Number);
+            let lastKnownBalance = 0;
+            const sortedAllMonths = Object.keys(dbData.months).sort();
+
+            const monthsToFetch = [];
+            for (let i = monthsCount - 1; i >= 0; i--) {
+                let m = currentMonthNum - i;
+                let y = currentYear;
+                while (m <= 0) {
+                    m += 12;
+                    y -= 1;
+                }
+                monthsToFetch.push(`${y}-${String(m).padStart(2, '0')}`);
+            }
+
+            monthsToFetch.forEach(mStr => {
+                if (dbData.months[mStr]) {
+                    lastKnownBalance = getMonthFinalAccountBalance(mStr);
+                } else {
+                    if (lastKnownBalance === 0) {
+                        const prevMonths = sortedAllMonths.filter(x => x < mStr);
+                        if (prevMonths.length > 0) {
+                            lastKnownBalance = getMonthFinalAccountBalance(prevMonths[prevMonths.length - 1]);
+                        }
+                    }
+                }
+                history.push({ month: mStr, balance: lastKnownBalance });
+            });
+
+            return history;
         }
 
         function changeMonthOffset(offset) {
@@ -2589,6 +2957,36 @@
             dbData.months[currentMonth].expenses = []; dbData.months[currentMonth].gains = []; saveDB(); updateDashboard();
         }
 
+        function formatDateLocal(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function getWeeklySpent() {
+            const today = new Date();
+            const currentDay = today.getDay(); // 0 (Dom) a 6 (Sáb)
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - currentDay);
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+            const startStr = formatDateLocal(startOfWeek);
+            const endStr = formatDateLocal(endOfWeek);
+
+            let total = 0;
+            for (let m in dbData.months) {
+                (dbData.months[m].expenses || []).forEach(e => {
+                    if (e.date >= startStr && e.date <= endStr) {
+                        total += e.value;
+                    }
+                });
+            }
+            return total;
+        }
+
         function updateDashboard() {
             ensureMonthExists(currentMonth);
             renderTransactionsList();
@@ -2603,6 +3001,106 @@
             updateKPIs(stats); update503020(stats); updateDynamicStatus(stats);
             updateChart(stats.byCategory); 
             updateTimelineChart(dbData.months[currentMonth].expenses);
+            updateNetWorthChart();
+            updateCategoryComparisonChart();
+            updateProjectionChart();
+        }
+
+        function updateCategoryComparisonChart() {
+            const ctx = document.getElementById('categoryComparisonChart').getContext('2d');
+
+            let [y, m] = currentMonth.split('-').map(Number);
+            let prevM = m - 1;
+            let prevY = y;
+            if (prevM < 1) { prevM = 12; prevY -= 1; }
+            const prevMonthStr = `${prevY}-${String(prevM).padStart(2, '0')}`;
+
+            const currExpenses = (dbData.months[currentMonth] && dbData.months[currentMonth].expenses) || [];
+            const prevExpenses = (dbData.months[prevMonthStr] && dbData.months[prevMonthStr].expenses) || [];
+
+            const catTotalsCurr = {};
+            const catTotalsPrev = {};
+            const allCats = new Set();
+
+            currExpenses.forEach(e => {
+                catTotalsCurr[e.category] = (catTotalsCurr[e.category] || 0) + e.value;
+                allCats.add(e.category);
+            });
+
+            prevExpenses.forEach(e => {
+                catTotalsPrev[e.category] = (catTotalsPrev[e.category] || 0) + e.value;
+                allCats.add(e.category);
+            });
+
+            const labels = Array.from(allCats).sort();
+            const dataCurr = labels.map(c => catTotalsCurr[c] || 0);
+            const dataPrev = labels.map(c => catTotalsPrev[c] || 0);
+
+            const tickColor = htmlElement.classList.contains('dark') ? '#cbd5e1' : '#475569';
+            const gridColor = htmlElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+
+            if (categoryComparisonChartInstance) {
+                categoryComparisonChartInstance.data.labels = labels;
+                categoryComparisonChartInstance.data.datasets[0].data = dataPrev;
+                categoryComparisonChartInstance.data.datasets[1].data = dataCurr;
+                categoryComparisonChartInstance.options.scales.x.ticks.color = tickColor;
+                categoryComparisonChartInstance.options.scales.y.ticks.color = tickColor;
+                categoryComparisonChartInstance.options.scales.y.grid.color = gridColor;
+                categoryComparisonChartInstance.options.plugins.legend.labels.color = tickColor;
+                categoryComparisonChartInstance.update();
+            } else {
+                categoryComparisonChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Mês Anterior',
+                                data: dataPrev,
+                                backgroundColor: 'rgba(156, 163, 175, 0.5)',
+                                borderColor: 'rgba(156, 163, 175, 1)',
+                                borderWidth: 1,
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Mês Atual',
+                                data: dataCurr,
+                                backgroundColor: '#f43f5e',
+                                borderColor: '#f43f5e',
+                                borderWidth: 1,
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { color: tickColor, font: { size: 11 }, usePointStyle: true, boxWidth: 6 }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + formatCurrency(context.raw);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: tickColor, font: { size: 10 } },
+                                grid: { display: false }
+                            },
+                            y: {
+                                ticks: { color: tickColor, font: { size: 10 } },
+                                grid: { color: gridColor }
+                            }
+                        }
+                    }
+                });
+            }
         }
 
         function getMonthTotalIncome(monthStr) {
@@ -2947,7 +3445,7 @@
                                     </div>
                                     <span class="font-semibold text-xs">${data.label}</span>
                                 </div>
-                                <span class="text-[10px] font-medium opacity-70">${data.count} itens</span>
+                                <span class="text-[10px] font-medium opacity-70">${data.count} items</span>
                             </div>
                             <div>
                                 <div class="flex justify-between items-baseline mb-1">
@@ -2970,6 +3468,12 @@
             totalExpensesDisplay.textContent = formatCurrency(stats.total);
             remainingBalanceDisplay.textContent = formatCurrency(stats.remaining);
             expensePercentDisplay.textContent = `${stats.income > 0 ? ((stats.total / stats.income) * 100).toFixed(1) : 0}%`;
+            
+            const weeklySpent = getWeeklySpent();
+            if (weeklySpentDisplay) {
+                weeklySpentDisplay.textContent = formatCurrency(weeklySpent);
+            }
+            
             savingsPercentDisplay.textContent = `${stats.income > 0 ? ((stats.remaining / stats.income) * 100).toFixed(1) : 0}%`;
         }
 
@@ -3030,6 +3534,89 @@
             }
         }
 
+        function updateNetWorthChart() {
+            const ctx = document.getElementById('netWorthChart').getContext('2d');
+            const historyData = getNetWorthHistory(netWorthSpan);
+            
+            const labels = historyData.map(d => {
+                const [y, m] = d.month.split('-');
+                const date = new Date(y, m - 1);
+                return date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', '');
+            });
+            const data = historyData.map(d => d.balance);
+
+            const tickColor = htmlElement.classList.contains('dark') ? '#cbd5e1' : '#475569';
+            const gridColor = htmlElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+
+            if (netWorthChartInstance) {
+                netWorthChartInstance.data.labels = labels;
+                netWorthChartInstance.data.datasets[0].data = data;
+                netWorthChartInstance.options.scales.x.ticks.color = tickColor;
+                netWorthChartInstance.options.scales.y.ticks.color = tickColor;
+                netWorthChartInstance.options.scales.y.grid.color = gridColor;
+                netWorthChartInstance.update();
+            } else {
+                let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)');
+                gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+                netWorthChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Saldo Final',
+                            data: data,
+                            borderColor: '#6366f1',
+                            backgroundColor: gradient,
+                            borderWidth: 2,
+                            pointBackgroundColor: '#22d3ee',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return formatCurrency(context.raw);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: tickColor, font: { size: 10 } },
+                                grid: { display: false }
+                            },
+                            y: {
+                                ticks: { 
+                                    color: tickColor, 
+                                    font: { size: 10 },
+                                    callback: function(value) {
+                                        return new Intl.NumberFormat('pt-BR', { notation: "compact", compactDisplay: "short" }).format(value);
+                                    }
+                                },
+                                grid: { color: gridColor }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index',
+                        },
+                    }
+                });
+            }
+        }
+
         function renderHistoryTable() {
             const tbody = document.getElementById('historyTableBody'); tbody.innerHTML = '';
             const sortedMonths = Object.keys(dbData.months).filter(m => m <= new Date().toISOString().slice(0, 7) && ((dbData.months[m].expenses||[]).length>0 || (dbData.months[m].gains||[]).length>0)).sort().reverse();
@@ -3075,6 +3662,136 @@
             const reader = new FileReader();
             reader.onload = function(event) { try { const parsed = JSON.parse(event.target.result); if (parsed.categories && parsed.months) { dbData = parsed; if(!dbData.cards) dbData.cards = []; if(!dbData.goals) dbData.goals = []; if(!dbData.categoryBudgets) dbData.categoryBudgets = {}; saveDB(); setupCategorySelect(); setupPaymentMethodsSelect(); setDefaultDateForCurrentMonth(); ensureMonthExists(currentMonth); updateDashboard(); } } catch(err) { } };
             reader.readAsText(file);
+        }
+
+        // --- SINCRONIZAÇÃO COM GITHUB (armazena o backup como um arquivo JSON num repositório) ---
+        function getGithubConfig() {
+            return JSON.parse(localStorage.getItem('findash_github_config')) || {};
+        }
+        function saveGithubConfig(cfg) {
+            localStorage.setItem('findash_github_config', JSON.stringify(cfg));
+        }
+        function setGithubStatus(msg, isError) {
+            const el = document.getElementById('githubSyncStatus');
+            if (!el) return;
+            el.textContent = msg;
+            el.className = 'text-xs mt-3 ' + (isError ? 'text-rose-500' : 'text-emerald-500');
+        }
+        // Codifica/decodifica em Base64 preservando acentos e caracteres especiais (UTF-8)
+        function b64EncodeUnicode(str) {
+            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode('0x' + p1)));
+        }
+        function b64DecodeUnicode(str) {
+            return decodeURIComponent(atob(str).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+        }
+        function githubApiUrl(cfg) {
+            const cleanPath = cfg.path.replace(/^\/+/, '');
+            return `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${cleanPath.split('/').map(encodeURIComponent).join('/')}`;
+        }
+
+        async function pushToGithub() {
+            const cfg = getGithubConfig();
+            if (!cfg.token || !cfg.owner || !cfg.repo || !cfg.path) { setGithubStatus('Preencha e salve as configurações antes de sincronizar.', true); return; }
+            setGithubStatus('Enviando para o GitHub...');
+            try {
+                const headers = { 'Authorization': `Bearer ${cfg.token}`, 'Accept': 'application/vnd.github+json' };
+                let sha;
+                const getRes = await fetch(`${githubApiUrl(cfg)}?ref=${encodeURIComponent(cfg.branch || 'main')}`, { headers });
+                if (getRes.status === 200) {
+                    sha = (await getRes.json()).sha;
+                } else if (getRes.status !== 404) {
+                    const errJson = await getRes.json().catch(() => ({}));
+                    throw new Error(errJson.message || `Erro ${getRes.status} ao consultar o arquivo`);
+                }
+
+                const putRes = await fetch(githubApiUrl(cfg), {
+                    method: 'PUT',
+                    headers: { ...headers, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: `Backup FinDash - ${new Date().toLocaleString('pt-BR')}`,
+                        content: b64EncodeUnicode(JSON.stringify(dbData, null, 2)),
+                        branch: cfg.branch || 'main',
+                        ...(sha ? { sha } : {})
+                    })
+                });
+                if (!putRes.ok) {
+                    const errJson = await putRes.json().catch(() => ({}));
+                    throw new Error(errJson.message || `Erro ${putRes.status} ao enviar o arquivo`);
+                }
+                cfg.lastSync = new Date().toLocaleString('pt-BR');
+                saveGithubConfig(cfg);
+                setGithubStatus(`Backup enviado com sucesso em ${cfg.lastSync}.`);
+            } catch (err) {
+                setGithubStatus(`Falha ao enviar: ${err.message}`, true);
+            }
+        }
+
+        async function pullFromGithub() {
+            const cfg = getGithubConfig();
+            if (!cfg.token || !cfg.owner || !cfg.repo || !cfg.path) { setGithubStatus('Preencha e salve as configurações antes de sincronizar.', true); return; }
+            if (!confirm('Isso vai substituir os dados atuais deste perfil pelos dados salvos no GitHub. Deseja continuar?')) return;
+            setGithubStatus('Baixando do GitHub...');
+            try {
+                const headers = { 'Authorization': `Bearer ${cfg.token}`, 'Accept': 'application/vnd.github+json' };
+                const getRes = await fetch(`${githubApiUrl(cfg)}?ref=${encodeURIComponent(cfg.branch || 'main')}`, { headers });
+                if (!getRes.ok) {
+                    const errJson = await getRes.json().catch(() => ({}));
+                    throw new Error(errJson.message || `Erro ${getRes.status} ao baixar o arquivo`);
+                }
+                const fileJson = await getRes.json();
+                const parsed = JSON.parse(b64DecodeUnicode(fileJson.content.replace(/\n/g, '')));
+                if (!parsed.categories || !parsed.months) throw new Error('Arquivo inválido: não parece um backup do FinDash.');
+                dbData = parsed;
+                if (!dbData.cards) dbData.cards = [];
+                if (!dbData.goals) dbData.goals = [];
+                if (!dbData.categoryBudgets) dbData.categoryBudgets = {};
+                saveDB();
+                setupCategorySelect(); setupPaymentMethodsSelect(); setDefaultDateForCurrentMonth(); ensureMonthExists(currentMonth); updateDashboard();
+                cfg.lastSync = new Date().toLocaleString('pt-BR');
+                saveGithubConfig(cfg);
+                setGithubStatus(`Dados baixados com sucesso em ${cfg.lastSync}.`);
+            } catch (err) {
+                setGithubStatus(`Falha ao baixar: ${err.message}`, true);
+            }
+        }
+
+        function setupGithubSync() {
+            const modal = document.getElementById('githubSyncModal');
+            const openModal = () => {
+                const cfg = getGithubConfig();
+                document.getElementById('ghToken').value = cfg.token || '';
+                document.getElementById('ghOwner').value = cfg.owner || '';
+                document.getElementById('ghRepo').value = cfg.repo || '';
+                document.getElementById('ghBranch').value = cfg.branch || 'main';
+                document.getElementById('ghPath').value = cfg.path || 'findash-backup.json';
+                setGithubStatus(cfg.lastSync ? `Última sincronização: ${cfg.lastSync}` : '');
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            };
+            const closeModal = () => {
+                modal.classList.add('opacity-0');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            };
+
+            document.getElementById('githubSyncBtn').addEventListener('click', openModal);
+            document.getElementById('closeGithubSyncModal').addEventListener('click', closeModal);
+
+            document.getElementById('githubSyncForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const cfg = {
+                    token: document.getElementById('ghToken').value.trim(),
+                    owner: document.getElementById('ghOwner').value.trim(),
+                    repo: document.getElementById('ghRepo').value.trim(),
+                    branch: document.getElementById('ghBranch').value.trim() || 'main',
+                    path: document.getElementById('ghPath').value.trim() || 'findash-backup.json',
+                    lastSync: getGithubConfig().lastSync
+                };
+                saveGithubConfig(cfg);
+                setGithubStatus('Configurações salvas.');
+            });
+
+            document.getElementById('ghPushBtn').addEventListener('click', pushToGithub);
+            document.getElementById('ghPullBtn').addEventListener('click', pullFromGithub);
         }
 
         function setupModals() {
