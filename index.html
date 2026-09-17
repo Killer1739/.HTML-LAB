@@ -452,6 +452,119 @@
                 min-height: 44px;
             }
         }
+
+        /* ==============================================
+           DRAG & DROP DE BLOCOS (PERSONALIZAÇÃO DO PAINEL)
+        ================================================ */
+        .drag-block {
+            position: relative;
+            transition: box-shadow 0.2s ease, outline-color 0.2s ease;
+        }
+
+        body.edit-mode .drag-block {
+            outline: 1.5px dashed rgba(99, 102, 241, 0.45);
+            outline-offset: 4px;
+            border-radius: 28px;
+        }
+
+        .drag-handle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 10px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            cursor: grab;
+            z-index: 30;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+        }
+        .drag-handle:hover { background: rgba(99, 102, 241, 0.3); }
+        .drag-handle:active { cursor: grabbing; }
+        .drag-handle i { font-size: 12px; pointer-events: none; }
+
+        body.edit-mode .drag-handle {
+            display: flex;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .drag-block.dragging {
+            cursor: grabbing;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+            outline-color: rgba(99, 102, 241, 0.9);
+            opacity: 0.97;
+            pointer-events: none;
+        }
+
+        .drag-placeholder {
+            border-radius: 28px;
+            border: 2px dashed rgba(99, 102, 241, 0.55);
+            background: rgba(99, 102, 241, 0.08);
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+
+        body.dragging-active { cursor: grabbing !important; }
+        body.dragging-active * { -webkit-user-select: none !important; user-select: none !important; }
+
+        .edit-mode-bar {
+            position: fixed;
+            left: 50%;
+            bottom: 18px;
+            transform: translateX(-50%) translateY(120%);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: calc(100vw - 24px);
+            padding: 10px 16px;
+            border-radius: 20px;
+            background: var(--dropdown-bg);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+            z-index: 300;
+            transition: transform 0.3s ease;
+        }
+        .edit-mode-bar.visible { transform: translateX(-50%) translateY(0); }
+        .edit-mode-bar-text { font-size: 11px; opacity: 0.85; max-width: 320px; }
+        .edit-mode-bar-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 8px 14px;
+            border-radius: 14px;
+            background: rgba(150, 150, 150, 0.12);
+            transition: var(--transition);
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .edit-mode-bar-btn:hover { background: rgba(150, 150, 150, 0.22); }
+        .edit-mode-bar-btn.primary {
+            background: #4f46e5;
+            color: #fff;
+            box-shadow: 0 8px 18px rgba(79, 70, 229, 0.4);
+        }
+        .edit-mode-bar-btn.primary:hover { background: #4338ca; }
+
+        @media (max-width: 640px) {
+            .edit-mode-bar { bottom: 90px; }
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -578,6 +691,7 @@
                             <button id="moreActionsBtn" title="Mais ações" class="header-more-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                             <div id="actionsGroup" class="header-actions-group">
                                 <button id="themeToggleBtn" title="Alternar Tema" class="header-action-btn"><i class="fa-solid fa-moon" id="themeIcon"></i><span>Alternar Tema</span></button>
+                                <button id="customizeLayoutBtn" title="Personalizar Layout" class="header-action-btn text-indigo-400"><i class="fa-solid fa-arrows-up-down-left-right"></i><span>Personalizar Layout</span></button>
                                 <button id="historyBtn" title="Histórico" class="header-action-btn text-indigo-500"><i class="fa-solid fa-chart-column"></i><span>Histórico</span></button>
                                 <button id="clearMonthBtn" title="Limpar mês" class="header-action-btn text-rose-500"><i class="fa-solid fa-trash"></i><span>Limpar mês</span></button>
                                 <button id="exportBtn" title="Backup" class="header-action-btn"><i class="fa-solid fa-download"></i><span>Backup (exportar)</span></button>
@@ -600,9 +714,10 @@
             <!-- ==============================================
                  VIEW 1: PAINEL 
             ================================================ -->
-            <div id="view-painel" class="view-section active flex-col gap-5 w-full">
+            <div id="view-painel" class="view-section active flex-col gap-5 w-full" data-dragzone="painel-blocks">
                 
-                <section class="glass-panel p-4 lg:p-5 relative overflow-hidden bg-gradient-to-r from-indigo-900/20 via-transparent to-cyan-900/20 border border-indigo-500/30">
+                <section class="glass-panel p-4 lg:p-5 relative overflow-hidden bg-gradient-to-r from-indigo-900/20 via-transparent to-cyan-900/20 border border-indigo-500/30 drag-block" data-block-id="quick-ai">
+                    <div class="drag-handle" title="Arraste para reordenar este bloco"><i class="fa-solid fa-grip-vertical"></i></div>
                     <div class="flex flex-col md:flex-row items-center justify-between gap-3">
                         <div class="flex items-center gap-3 w-full md:w-auto">
                             <div class="w-9 h-9 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/30">
@@ -626,8 +741,9 @@
                     </div>
                 </section>
 
-                <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
-                    <div class="glass-panel p-4 lg:p-5 flex flex-col justify-between">
+                <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5" id="statsGrid" data-dragzone="stats-blocks">
+                    <div class="glass-panel p-4 lg:p-5 flex flex-col justify-between drag-block" data-block-id="stat-saldo">
+                        <div class="drag-handle" title="Arraste para reordenar este cartão"><i class="fa-solid fa-grip-vertical"></i></div>
                         <div class="flex justify-between items-start mb-2 lg:mb-3">
                             <span class="text-xs font-medium opacity-70 truncate">Saldo em Conta</span>
                             <button id="editAccountBalanceBtn" class="w-7 h-7 rounded-xl bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500/20 transition flex items-center justify-center shrink-0"><i class="fa-solid fa-pen text-[10px]"></i></button>
@@ -635,7 +751,8 @@
                         <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-cyan-500 truncate" id="totalAccountBalanceDisplay">R$ 0,00</h2>
                     </div>
 
-                    <div class="glass-panel p-4 lg:p-5 flex flex-col justify-between">
+                    <div class="glass-panel p-4 lg:p-5 flex flex-col justify-between drag-block" data-block-id="stat-renda">
+                        <div class="drag-handle" title="Arraste para reordenar este cartão"><i class="fa-solid fa-grip-vertical"></i></div>
                         <div class="flex justify-between items-start mb-2 lg:mb-3">
                             <span class="text-xs font-medium opacity-70 truncate">Renda Mensal</span>
                             <button id="editIncomeBtn" class="w-7 h-7 rounded-xl bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 transition flex items-center justify-center shrink-0"><i class="fa-solid fa-pen text-[10px]"></i></button>
@@ -643,7 +760,8 @@
                         <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-emerald-500 truncate" id="totalIncomeDisplay">R$ 0,00</h2>
                     </div>
 
-                    <div class="glass-panel p-4 lg:p-5 flex flex-col justify-between relative overflow-hidden">
+                    <div class="glass-panel p-4 lg:p-5 flex flex-col justify-between relative overflow-hidden drag-block" data-block-id="stat-gastos">
+                        <div class="drag-handle" title="Arraste para reordenar este cartão"><i class="fa-solid fa-grip-vertical"></i></div>
                         <div class="flex justify-between items-start mb-2 lg:mb-3">
                             <span class="text-xs font-medium opacity-70 truncate">Gastos</span>
                             <div class="w-7 h-7 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-arrow-trend-up text-[10px]"></i></div>
@@ -655,7 +773,8 @@
                         </div>
                     </div>
 
-                    <div class="glass-panel p-4 lg:p-5 flex flex-col justify-between relative overflow-hidden">
+                    <div class="glass-panel p-4 lg:p-5 flex flex-col justify-between relative overflow-hidden drag-block" data-block-id="stat-sobra">
+                        <div class="drag-handle" title="Arraste para reordenar este cartão"><i class="fa-solid fa-grip-vertical"></i></div>
                         <div class="flex justify-between items-start mb-2 lg:mb-3">
                             <span class="text-xs font-medium opacity-70 truncate">Sobra Livre</span>
                             <div class="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-piggy-bank text-[10px]"></i></div>
@@ -665,7 +784,8 @@
                     </div>
                 </section>
 
-                <section class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 drag-block" data-block-id="timeline-transactions">
+                    <div class="drag-handle" title="Arraste para reordenar este bloco"><i class="fa-solid fa-grip-vertical"></i></div>
                     <div class="glass-panel p-4 lg:p-5">
                         <h3 class="text-base font-bold mb-3">Evolução Mensal (Barras)</h3>
                         <div class="relative h-56 sm:h-64 w-full">
@@ -710,7 +830,8 @@
                     </div>
                 </section>
 
-                <section class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <section class="grid grid-cols-1 lg:grid-cols-3 gap-5 drag-block" data-block-id="category-budget">
+                    <div class="drag-handle" title="Arraste para reordenar este bloco"><i class="fa-solid fa-grip-vertical"></i></div>
                     <div class="glass-panel p-4 lg:p-5 lg:col-span-2 flex flex-col justify-between">
                         <h3 class="text-base font-bold mb-3">Gastos por Categoria</h3>
                         <div class="relative h-56 sm:h-64 w-full flex justify-center items-center">
@@ -753,7 +874,8 @@
                     </div>
                 </section>
                 
-                <section class="glass-panel p-4 lg:p-5 w-full flex flex-col gap-3">
+                <section class="glass-panel p-4 lg:p-5 w-full flex flex-col gap-3 drag-block" data-block-id="net-worth">
+                    <div class="drag-handle" title="Arraste para reordenar este bloco"><i class="fa-solid fa-grip-vertical"></i></div>
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <h3 class="text-base font-bold">Evolução do Patrimônio (Saldo)</h3>
                         <div class="flex gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl">
@@ -767,7 +889,8 @@
                 </section>
 
                 <!-- PROJEÇÃO FUTURA COM TABELA E GRÁFICO -->
-                <section class="glass-panel p-4 lg:p-5 w-full flex flex-col gap-3">
+                <section class="glass-panel p-4 lg:p-5 w-full flex flex-col gap-3 drag-block" data-block-id="projection">
+                    <div class="drag-handle" title="Arraste para reordenar este bloco"><i class="fa-solid fa-grip-vertical"></i></div>
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <div>
                             <h3 class="text-base font-bold flex items-center gap-2">Projeção Futura <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i></h3>
@@ -1363,6 +1486,20 @@
             <button id="closeInfoBtn" class="absolute top-5 right-5 opacity-70 hover:opacity-100"><i class="fa-solid fa-xmark text-lg"></i></button>
             <h3 class="text-lg font-bold mb-3">O Método 50/30/20</h3>
             <ul class="space-y-2 text-xs opacity-80"><li><strong class="text-blue-400">50% Necessidades:</strong> Moradia, alimentação.</li><li><strong class="text-amber-400">30% Desejos:</strong> Lazer, streaming.</li><li><strong class="text-emerald-400">20% Metas:</strong> Investimentos e reserva.</li></ul>
+        </div>
+    </div>
+
+    <!-- ==============================================
+         BARRA FLUTUANTE DE PERSONALIZAÇÃO (DRAG & DROP)
+    ================================================ -->
+    <div id="editModeBar" class="edit-mode-bar">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-arrows-up-down-left-right text-indigo-400"></i>
+            <span class="edit-mode-bar-text">Modo de personalização ativo. Segure o ícone <i class="fa-solid fa-grip-vertical"></i> em cada bloco e arraste para reorganizar o painel.</span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <button id="resetLayoutBtn" class="edit-mode-bar-btn"><i class="fa-solid fa-rotate-left"></i><span>Restaurar padrão</span></button>
+            <button id="finishEditModeBtn" class="edit-mode-bar-btn primary"><i class="fa-solid fa-check"></i><span>Concluir</span></button>
         </div>
     </div>
 
@@ -2118,6 +2255,7 @@
             const totalVal = item.value;
             const installmentGroupId = numInstallments > 1 ? generateId() : null;
             const baseVal = Math.floor((totalVal / numInstallments) * 100) / 100;
+            let firstBucket = null;
 
             for (let i = 0; i < numInstallments; i++) {
                 let currentVal = baseVal;
@@ -2127,7 +2265,9 @@
                 }
 
                 const installmentDate = addMonthsToDateString(item.date, i);
-                const targetMonth = installmentDate.slice(0, 7);
+                const bucket = item.typeItem === 'expense' ? resolveExpenseBucketMonth(installmentDate, item.paymentMethod) : { targetMonth: installmentDate.slice(0, 7), invoiceMonth: null, dueDate: null, card: null };
+                if (i === 0) firstBucket = bucket;
+                const targetMonth = bucket.targetMonth;
                 ensureMonthExists(targetMonth);
 
                 const installmentDesc = numInstallments > 1 ? `${item.description} (${i + 1}/${numInstallments})` : item.description;
@@ -2144,6 +2284,8 @@
                     value: currentVal,
                     type: item.type,
                     recurrent: false,
+                    invoiceMonth: bucket.invoiceMonth,
+                    dueDate: bucket.dueDate,
                     createdAt: Date.now() + i
                 };
 
@@ -2154,8 +2296,7 @@
                 }
             }
 
-            const targetMonth = item.date.slice(0, 7);
-            currentMonth = targetMonth;
+            currentMonth = firstBucket ? firstBucket.targetMonth : item.date.slice(0, 7);
             currentMonthInput.value = currentMonth;
 
             saveDB();
@@ -2163,6 +2304,8 @@
 
             if (item.typeItem === 'gain') {
                 showNotification('gain', `IA: +${formatCurrency(totalVal)}`, `Ganho registrado em "${item.category}".`);
+            } else if (firstBucket && firstBucket.card && firstBucket.targetMonth !== item.date.slice(0, 7)) {
+                showNotification('expense', `IA: -${formatCurrency(totalVal)}`, `Cartão já fechado nesta data: lançado na fatura de ${formatInvoiceLabel(firstBucket.targetMonth)}.`);
             } else {
                 showNotification('expense', `IA: -${formatCurrency(totalVal)}`, numInstallments > 1 ? `Parcelado em ${numInstallments}x no ${item.paymentMethod}.` : `Despesa categorizada em "${item.category}".`);
             }
@@ -2177,6 +2320,8 @@
             if (!dbData.cards) dbData.cards = [];
             if (!dbData.goals) dbData.goals = [];
             if (!dbData.categoryBudgets) dbData.categoryBudgets = {};
+
+            migrateCardInvoiceMonths();
 
             timeInput.addEventListener('focus', () => { isTimeInputFocused = true; });
             timeInput.addEventListener('blur', () => { if(!timeInput.value) isTimeInputFocused = false; });
@@ -2402,6 +2547,7 @@
             setupPaymentMethodsSelect();
             setupModals();
             setupGithubSync();
+            setupBlockDragDrop();
             
             Chart.defaults.color = htmlElement.classList.contains('dark') ? '#cbd5e1' : '#475569';
             Chart.defaults.font.family = "'Sora', sans-serif";
@@ -3023,6 +3169,102 @@
             return `${y}-${String(m).padStart(2, '0')}-${String(safeDay).padStart(2, '0')}`;
         }
 
+        /* ==================================================================
+           SISTEMA DE FATURA DE CARTÃO DE CRÉDITO (CICLO REAL BRASILEIRO)
+           ------------------------------------------------------------------
+           Regra: uma compra feita DEPOIS do dia de fechamento do cartão não
+           entra na fatura que está prestes a fechar — ela é automaticamente
+           jogada para a fatura do mês seguinte (que só vai vencer depois).
+           Isso significa que o valor só é descontado do saldo em conta no
+           mês em que a fatura efetivamente vence, e não na data da compra.
+        ================================================================== */
+        function getCardByPaymentMethod(paymentMethod) {
+            if (!paymentMethod || !paymentMethod.startsWith('Cartão: ')) return null;
+            const cardName = paymentMethod.replace('Cartão: ', '');
+            return (dbData.cards || []).find(c => c.name === cardName) || null;
+        }
+
+        function getCardInvoiceMonth(dateStr, card) {
+            let [year, month, day] = dateStr.split('-').map(Number);
+            month -= 1; // trabalha com mês 0-indexado
+
+            // Compra feita após o fechamento -> entra na fatura do ciclo seguinte
+            if (day > card.closingDay) {
+                month += 1;
+            }
+            // Se o vencimento configurado for "antes" do fechamento no calendário,
+            // significa que a fatura fechada neste mês só vence no mês seguinte
+            if (card.dueDay < card.closingDay) {
+                month += 1;
+            }
+
+            while (month > 11) { month -= 12; year += 1; }
+            while (month < 0) { month += 12; year -= 1; }
+
+            return `${year}-${String(month + 1).padStart(2, '0')}`;
+        }
+
+        function getCardInvoiceDueDateStr(dateStr, card) {
+            const invoiceMonth = getCardInvoiceMonth(dateStr, card);
+            const [y, m] = invoiceMonth.split('-').map(Number);
+            const maxDay = new Date(y, m, 0).getDate();
+            const safeDay = Math.min(card.dueDay, maxDay);
+            return `${invoiceMonth}-${String(safeDay).padStart(2, '0')}`;
+        }
+
+        function formatInvoiceLabel(monthStr) {
+            if (!monthStr) return '';
+            const [y, m] = monthStr.split('-').map(Number);
+            return new Date(y, m - 1).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', '');
+        }
+
+        // Recalcula, para uma despesa já existente, em qual fatura/mês ela deveria
+        // estar de acordo com o cartão usado — usado tanto ao criar quanto ao
+        // migrar lançamentos antigos que ficaram no mês errado.
+        function resolveExpenseBucketMonth(dateStr, paymentMethod) {
+            const card = getCardByPaymentMethod(paymentMethod);
+            if (!card) return { targetMonth: dateStr.slice(0, 7), invoiceMonth: null, dueDate: null, card: null };
+            const targetMonth = getCardInvoiceMonth(dateStr, card);
+            return { targetMonth, invoiceMonth: targetMonth, dueDate: getCardInvoiceDueDateStr(dateStr, card), card };
+        }
+
+        // Corrige automaticamente, uma única vez, lançamentos de cartão que foram
+        // salvos no mês errado antes desta correção existir (bug relatado pelo usuário).
+        function migrateCardInvoiceMonths() {
+            if (!dbData || dbData._invoiceMigrationV1 || !dbData.cards || dbData.cards.length === 0) {
+                if (dbData) dbData._invoiceMigrationV1 = true;
+                return;
+            }
+
+            let moved = 0;
+            Object.keys(dbData.months).slice().forEach(monthStr => {
+                const monthObj = dbData.months[monthStr];
+                if (!monthObj || !monthObj.expenses) return;
+
+                const staying = [];
+                monthObj.expenses.forEach(exp => {
+                    const card = getCardByPaymentMethod(exp.paymentMethod);
+                    if (!card || !exp.date) { staying.push(exp); return; }
+
+                    const correctMonth = getCardInvoiceMonth(exp.date, card);
+                    exp.invoiceMonth = correctMonth;
+                    exp.dueDate = getCardInvoiceDueDateStr(exp.date, card);
+
+                    if (correctMonth === monthStr) {
+                        staying.push(exp);
+                    } else {
+                        ensureMonthExists(correctMonth);
+                        dbData.months[correctMonth].expenses.push(exp);
+                        moved++;
+                    }
+                });
+                monthObj.expenses = staying;
+            });
+
+            dbData._invoiceMigrationV1 = true;
+            if (moved > 0) saveDB();
+        }
+
         function addExpense() {
             const desc = document.getElementById('descInput').value.trim();
             const cat = document.getElementById('categoryInput').value;
@@ -3037,6 +3279,7 @@
 
             const installmentGroupId = numInstallments > 1 ? generateId() : null;
             const baseVal = Math.floor((totalVal / numInstallments) * 100) / 100;
+            let firstBucket = null;
 
             for (let i = 0; i < numInstallments; i++) {
                 let currentVal = baseVal;
@@ -3046,7 +3289,9 @@
                 }
 
                 const installmentDate = addMonthsToDateString(baseDateVal, i);
-                const targetMonth = installmentDate.slice(0, 7);
+                const bucket = resolveExpenseBucketMonth(installmentDate, paymentMethod);
+                if (i === 0) firstBucket = bucket;
+                const targetMonth = bucket.targetMonth;
                 ensureMonthExists(targetMonth);
 
                 const installmentDesc = numInstallments > 1 ? `${desc} (${i + 1}/${numInstallments})` : desc;
@@ -3063,12 +3308,18 @@
                     value: currentVal,
                     type: dbData.categories[cat] || 'wants',
                     recurrent: recurrent && i === 0,
+                    invoiceMonth: bucket.invoiceMonth,
+                    dueDate: bucket.dueDate,
                     createdAt: Date.now() + i
                 });
             }
 
             saveDB();
-            showNotification('expense', `Despesa: -${formatCurrency(totalVal)}`, numInstallments > 1 ? `Parcelado em ${numInstallments}x com sucesso.` : "Despesa computada no painel.");
+            if (firstBucket && firstBucket.card && firstBucket.targetMonth !== currentMonth) {
+                showNotification('expense', `Despesa: -${formatCurrency(totalVal)}`, `Cartão já fechado nesta data: lançado na fatura de ${formatInvoiceLabel(firstBucket.targetMonth)} (vence dia ${firstBucket.card.dueDay}).`);
+            } else {
+                showNotification('expense', `Despesa: -${formatCurrency(totalVal)}`, numInstallments > 1 ? `Parcelado em ${numInstallments}x com sucesso.` : "Despesa computada no painel.");
+            }
             document.getElementById('descInput').value = '';
             document.getElementById('valInput').value = '';
             document.getElementById('installmentInput').value = '1';
@@ -3346,7 +3597,8 @@
                     sign = '- '; valColor = 'text-rose-500';
                     iconClass = item.type === 'wants' ? 'fa-martini-glass-citrus text-amber-500' : (item.type === 'savings' ? 'fa-credit-card text-emerald-500' : 'fa-house text-blue-500');
                     const payMethodDisplay = paymentIcons[item.paymentMethod] || `💳 ${item.paymentMethod || 'Pix'}`;
-                    subtitle = `${categoryIcons[item.category] || '📁'} ${item.category} • <span class="opacity-80">${payMethodDisplay}</span> • ${dateTimeStr}`;
+                    const invoiceBadge = (item.paymentMethod && item.paymentMethod.startsWith('Cartão: ') && item.invoiceMonth) ? ` • <span class="text-indigo-400" title="Mês em que a fatura fecha e é descontada da conta">Fatura ${formatInvoiceLabel(item.invoiceMonth)}</span>` : '';
+                    subtitle = `${categoryIcons[item.category] || '📁'} ${item.category} • <span class="opacity-80">${payMethodDisplay}</span>${invoiceBadge} • ${dateTimeStr}`;
                 }
 
                 li.innerHTML = `
@@ -3385,7 +3637,8 @@
                     const dateTimeStr = (item.date ? item.date.split('-').reverse().join('/') : '') + (item.time ? ` • 🕒 ${item.time.slice(0, 5)}` : '');
                     const iconClass = item.type === 'wants' ? 'fa-martini-glass-citrus text-amber-500' : (item.type === 'savings' ? 'fa-credit-card text-emerald-500' : 'fa-house text-blue-500');
                     const payMethodDisplay = paymentIcons[item.paymentMethod] || `💳 ${item.paymentMethod || 'Pix'}`;
-                    const subtitle = `${categoryIcons[item.category] || '📁'} ${item.category} • <span class="opacity-80">${payMethodDisplay}</span> • ${dateTimeStr}`;
+                    const invoiceBadge = (item.paymentMethod && item.paymentMethod.startsWith('Cartão: ') && item.invoiceMonth) ? ` • <span class="text-indigo-400" title="Mês em que a fatura fecha e é descontada da conta">Fatura ${formatInvoiceLabel(item.invoiceMonth)}</span>` : '';
+                    const subtitle = `${categoryIcons[item.category] || '📁'} ${item.category} • <span class="opacity-80">${payMethodDisplay}</span>${invoiceBadge} • ${dateTimeStr}`;
 
                     li.innerHTML = `
                         <div class="flex items-center gap-3 overflow-hidden">
@@ -3510,6 +3763,10 @@
             emptyMsg.style.display = 'none';
 
             const m = dbData.months[currentMonth];
+            const nextMonthStr = addMonthsToDateString(`${currentMonth}-01`, 1).slice(0, 7);
+            const nextMonthObj = dbData.months[nextMonthStr];
+
+            // Fatura que vence no mês exibido (já fechada, aguardando pagamento)
             let cardSpending = {};
             (m.expenses || []).forEach(e => {
                 if (e.paymentMethod && e.paymentMethod.startsWith('Cartão: ')) {
@@ -3518,10 +3775,37 @@
                 }
             });
 
+            // Próxima fatura, ainda em aberto (acumulando até o próximo fechamento)
+            let nextCardSpending = {};
+            if (nextMonthObj) {
+                (nextMonthObj.expenses || []).forEach(e => {
+                    if (e.paymentMethod && e.paymentMethod.startsWith('Cartão: ')) {
+                        const cardName = e.paymentMethod.replace('Cartão: ', '');
+                        nextCardSpending[cardName] = (nextCardSpending[cardName] || 0) + e.value;
+                    }
+                });
+            }
+
+            // Limite comprometido: soma de todas as faturas atuais e futuras ainda não pagas
+            // (mês exibido em diante) — inclui parcelas futuras já assumidas no limite.
+            let cardCommitted = {};
+            Object.keys(dbData.months).forEach(mStr => {
+                if (mStr < currentMonth) return;
+                (dbData.months[mStr].expenses || []).forEach(e => {
+                    if (e.paymentMethod && e.paymentMethod.startsWith('Cartão: ')) {
+                        const cardName = e.paymentMethod.replace('Cartão: ', '');
+                        cardCommitted[cardName] = (cardCommitted[cardName] || 0) + e.value;
+                    }
+                });
+            });
+
             dbData.cards.forEach(card => {
                 const spent = cardSpending[card.name] || 0;
-                const available = card.limit - spent;
-                const pct = card.limit > 0 ? Math.min((spent / card.limit) * 100, 100) : 0;
+                const nextSpent = nextCardSpending[card.name] || 0;
+                const committed = cardCommitted[card.name] || 0;
+                const available = Math.max(card.limit - committed, 0);
+                const pct = card.limit > 0 ? Math.min((committed / card.limit) * 100, 100) : 0;
+                const dueDateLabel = String(card.dueDay).padStart(2, '0') + '/' + String(parseInt(currentMonth.split('-')[1])).padStart(2, '0');
 
                 const cardDiv = document.createElement('div');
                 cardDiv.className = 'card-item glass-panel p-5 flex flex-col justify-between relative overflow-hidden group';
@@ -3539,14 +3823,18 @@
                         </div>
                         <div class="space-y-2.5 mb-4">
                             <div class="flex justify-between text-xs">
-                                <span class="opacity-70">Fatura Atual:</span>
+                                <span class="opacity-70">Fatura deste mês <span class="opacity-60">(vence ${dueDateLabel})</span>:</span>
                                 <span class="font-bold text-rose-500">${formatCurrency(spent)}</span>
                             </div>
                             <div class="flex justify-between text-xs">
-                                <span class="opacity-70">Disponível:</span>
+                                <span class="opacity-70">Próxima fatura <span class="opacity-60">(em aberto)</span>:</span>
+                                <span class="font-bold text-amber-500">${formatCurrency(nextSpent)}</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="opacity-70">Limite disponível:</span>
                                 <span class="font-bold text-emerald-500">${formatCurrency(available)}</span>
                             </div>
-                            <div class="w-full bg-black/10 dark:bg-white/10 rounded-full h-1.5 mt-1">
+                            <div class="w-full bg-black/10 dark:bg-white/10 rounded-full h-1.5 mt-1" title="${formatCurrency(committed)} comprometidos de ${formatCurrency(card.limit)}">
                                 <div class="bg-indigo-500 h-1.5 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
                             </div>
                         </div>
@@ -4006,16 +4294,266 @@
                 for (let mStr in dbData.months) { const arr = typeItem === 'gain' ? (dbData.months[mStr].gains || []) : (dbData.months[mStr].expenses || []); const idx = arr.findIndex(i => i.id === id); if (idx !== -1) { itemFound = arr.splice(idx, 1)[0]; break; } }
                 if (itemFound && desc && cat && !isNaN(val)) {
                     itemFound.description = desc; itemFound.category = cat; itemFound.date = dateVal; itemFound.time = document.getElementById('editTimeInput').value; itemFound.value = val;
-                    if (typeItem === 'expense') { itemFound.paymentMethod = document.getElementById('editPaymentMethodInput').value; itemFound.type = dbData.categories[cat] || 'wants'; itemFound.recurrent = document.getElementById('editRecurrentCheck').checked; }
-                    const m = dateVal.slice(0, 7); ensureMonthExists(m);
+                    let m = dateVal.slice(0, 7);
+                    if (typeItem === 'expense') {
+                        const editedPaymentMethod = document.getElementById('editPaymentMethodInput').value;
+                        itemFound.paymentMethod = editedPaymentMethod;
+                        itemFound.type = dbData.categories[cat] || 'wants';
+                        itemFound.recurrent = document.getElementById('editRecurrentCheck').checked;
+                        const bucket = resolveExpenseBucketMonth(dateVal, editedPaymentMethod);
+                        m = bucket.targetMonth;
+                        itemFound.invoiceMonth = bucket.invoiceMonth;
+                        itemFound.dueDate = bucket.dueDate;
+                    }
+                    ensureMonthExists(m);
                     typeItem === 'gain' ? dbData.months[m].gains.push(itemFound) : dbData.months[m].expenses.push(itemFound);
-                    saveDB(); editModal.classList.add('hidden'); updateDashboard();
+                    saveDB(); editModal.classList.add('hidden');
+                    if (typeItem === 'expense' && m !== currentMonth) { currentMonth = m; currentMonthInput.value = currentMonth; }
+                    updateDashboard();
                 }
             });
 
             const infoModal = document.getElementById('infoModal');
             document.getElementById('infoBtn').addEventListener('click', () => { infoModal.classList.remove('hidden'); setTimeout(() => infoModal.classList.remove('opacity-0'), 10); });
             document.getElementById('closeInfoBtn').addEventListener('click', () => { infoModal.classList.add('opacity-0'); setTimeout(() => infoModal.classList.add('hidden'), 300); });
+        }
+
+        /* ==================================================================
+           MECÂNICA DE ARRASTAR E SOLTAR (DRAG & DROP) DOS BLOCOS DO PAINEL
+           ------------------------------------------------------------------
+           - Funciona com mouse e toque (Pointer Events), sem bibliotecas externas.
+           - Cada "zona" (data-dragzone) contém "blocos" (.drag-block) que podem
+             ser reordenados livremente através de um "handle" (.drag-handle).
+           - A ordem escolhida pelo usuário é salva no localStorage e restaurada
+             automaticamente na próxima visita, por zona.
+           - Só é possível arrastar quando o "Modo de Personalização" está ativo
+             (botão "Personalizar Layout" no menu de ações do cabeçalho), para
+             não atrapalhar o uso normal do dashboard (scroll, cliques, etc).
+        ================================================================== */
+        const BlockDragDrop = (() => {
+            const STORAGE_PREFIX = 'findash_layout_';
+            let zones = [];          // { el, storageKey, axis }
+            let dragEl = null;       // elemento real sendo arrastado
+            let originZone = null;   // zona de origem/atual do arraste
+            let placeholder = null;  // marcador do local onde o bloco vai cair
+            let pointerOffsetX = 0;
+            let pointerOffsetY = 0;
+            let originalStyles = null;
+            let activePointerId = null;
+
+            function query(zoneEl) {
+                return Array.from(zoneEl.querySelectorAll(':scope > .drag-block'));
+            }
+
+            function registerZone(zoneEl, { storageKey, axis = 'y' } = {}) {
+                if (!zoneEl || zoneEl.dataset.dragInit === '1') return;
+                zoneEl.dataset.dragInit = '1';
+                zones.push({ el: zoneEl, storageKey, axis });
+
+                if (storageKey) restoreOrder(zoneEl, storageKey);
+
+                query(zoneEl).forEach(block => bindHandle(block, zoneEl));
+            }
+
+            function bindHandle(block, zoneEl) {
+                const handle = block.querySelector(':scope > .drag-handle');
+                if (!handle || handle.dataset.dragBound === '1') return;
+                handle.dataset.dragBound = '1';
+                handle.addEventListener('pointerdown', (e) => startDrag(e, block, zoneEl));
+            }
+
+            function isEditModeOn() {
+                return document.body.classList.contains('edit-mode');
+            }
+
+            function startDrag(e, block, zoneEl) {
+                if (!isEditModeOn()) return;
+                if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
+                e.preventDefault();
+
+                dragEl = block;
+                originZone = zoneEl;
+                activePointerId = e.pointerId;
+
+                const rect = block.getBoundingClientRect();
+                pointerOffsetX = e.clientX - rect.left;
+                pointerOffsetY = e.clientY - rect.top;
+
+                placeholder = document.createElement('div');
+                placeholder.className = 'drag-placeholder';
+                placeholder.style.width = rect.width + 'px';
+                placeholder.style.height = rect.height + 'px';
+                block.parentNode.insertBefore(placeholder, block.nextSibling);
+
+                originalStyles = {
+                    position: block.style.position,
+                    top: block.style.top,
+                    left: block.style.left,
+                    width: block.style.width,
+                    margin: block.style.margin,
+                    zIndex: block.style.zIndex,
+                };
+
+                block.classList.add('dragging');
+                block.style.position = 'fixed';
+                block.style.top = rect.top + 'px';
+                block.style.left = rect.left + 'px';
+                block.style.width = rect.width + 'px';
+                block.style.margin = '0';
+                block.style.zIndex = '9999';
+                document.body.appendChild(block);
+                document.body.classList.add('dragging-active');
+
+                try { handleForBlock(block).setPointerCapture(activePointerId); } catch (err) {}
+
+                document.addEventListener('pointermove', onDragMove);
+                document.addEventListener('pointerup', endDrag);
+                document.addEventListener('pointercancel', endDrag);
+            }
+
+            function handleForBlock(block) {
+                return block.querySelector(':scope > .drag-handle');
+            }
+
+            function onDragMove(e) {
+                if (!dragEl) return;
+                if (activePointerId !== null && e.pointerId !== activePointerId) return;
+
+                dragEl.style.top = (e.clientY - pointerOffsetY) + 'px';
+                dragEl.style.left = (e.clientX - pointerOffsetX) + 'px';
+
+                const zoneInfo = zones.find(z => z.el === originZone);
+                if (!zoneInfo) return;
+
+                const siblings = query(originZone).filter(b => b !== dragEl);
+                let closest = null;
+                let closestDist = Infinity;
+
+                siblings.forEach(sib => {
+                    const r = sib.getBoundingClientRect();
+                    const cx = r.left + r.width / 2;
+                    const cy = r.top + r.height / 2;
+                    const dist = Math.pow(cx - e.clientX, 2) + Math.pow(cy - e.clientY, 2);
+                    if (dist < closestDist) {
+                        closestDist = dist;
+                        closest = { el: sib, cx, cy };
+                    }
+                });
+
+                if (!closest) return;
+
+                const before = zoneInfo.axis === 'x' ? (e.clientX < closest.cx) : (e.clientY < closest.cy);
+                if (before) {
+                    originZone.insertBefore(placeholder, closest.el);
+                } else {
+                    originZone.insertBefore(placeholder, closest.el.nextSibling);
+                }
+            }
+
+            function endDrag(e) {
+                if (!dragEl) return;
+                if (activePointerId !== null && e.pointerId !== undefined && e.pointerId !== activePointerId) return;
+
+                document.removeEventListener('pointermove', onDragMove);
+                document.removeEventListener('pointerup', endDrag);
+                document.removeEventListener('pointercancel', endDrag);
+                document.body.classList.remove('dragging-active');
+
+                dragEl.style.position = originalStyles.position;
+                dragEl.style.top = originalStyles.top;
+                dragEl.style.left = originalStyles.left;
+                dragEl.style.width = originalStyles.width;
+                dragEl.style.margin = originalStyles.margin;
+                dragEl.style.zIndex = originalStyles.zIndex;
+                dragEl.classList.remove('dragging');
+
+                originZone.insertBefore(dragEl, placeholder);
+                placeholder.remove();
+
+                saveOrder(originZone);
+                window.dispatchEvent(new Event('resize'));
+
+                dragEl = null;
+                originZone = null;
+                placeholder = null;
+                activePointerId = null;
+            }
+
+            function saveOrder(zoneEl) {
+                const zoneInfo = zones.find(z => z.el === zoneEl);
+                if (!zoneInfo || !zoneInfo.storageKey) return;
+                const order = query(zoneEl).map(b => b.dataset.blockId);
+                try { localStorage.setItem(STORAGE_PREFIX + zoneInfo.storageKey, JSON.stringify(order)); } catch (err) {}
+            }
+
+            function restoreOrder(zoneEl, storageKey) {
+                let saved;
+                try { saved = JSON.parse(localStorage.getItem(STORAGE_PREFIX + storageKey) || 'null'); } catch (err) { saved = null; }
+                if (!Array.isArray(saved) || !saved.length) return;
+
+                const blocks = query(zoneEl);
+                const map = {};
+                blocks.forEach(b => { map[b.dataset.blockId] = b; });
+
+                saved.forEach(id => { if (map[id]) zoneEl.appendChild(map[id]); });
+                blocks.forEach(b => { if (!saved.includes(b.dataset.blockId)) zoneEl.appendChild(b); });
+            }
+
+            function resetAll() {
+                zones.forEach(z => {
+                    if (z.storageKey) { try { localStorage.removeItem(STORAGE_PREFIX + z.storageKey); } catch (err) {} }
+                });
+                location.reload();
+            }
+
+            function setEditMode(enabled) {
+                document.body.classList.toggle('edit-mode', enabled);
+                const bar = document.getElementById('editModeBar');
+                if (bar) bar.classList.toggle('visible', enabled);
+            }
+
+            function toggleEditMode() {
+                setEditMode(!isEditModeOn());
+            }
+
+            return { registerZone, resetAll, setEditMode, toggleEditMode };
+        })();
+
+        function setupBlockDragDrop() {
+            // Bloco principal do painel (seções inteiras, empilhadas verticalmente)
+            const painelZone = document.getElementById('view-painel');
+            if (painelZone) BlockDragDrop.registerZone(painelZone, { storageKey: 'painel-blocks', axis: 'y' });
+
+            // Grade dos 4 cartões de indicadores (Saldo, Renda, Gastos, Sobra)
+            const statsZone = document.getElementById('statsGrid');
+            if (statsZone) BlockDragDrop.registerZone(statsZone, { storageKey: 'stats-blocks', axis: 'x' });
+
+            const customizeBtn = document.getElementById('customizeLayoutBtn');
+            const finishBtn = document.getElementById('finishEditModeBtn');
+            const resetBtn = document.getElementById('resetLayoutBtn');
+            const actionsGroup = document.getElementById('actionsGroup');
+
+            if (customizeBtn) {
+                customizeBtn.addEventListener('click', () => {
+                    BlockDragDrop.toggleEditMode();
+                    if (actionsGroup) actionsGroup.classList.remove('open');
+                    const painel = document.getElementById('view-painel');
+                    if (painel && document.body.classList.contains('edit-mode')) {
+                        // Garante que o usuário esteja vendo o painel ao personalizar
+                        document.querySelector('[data-target="view-painel"]')?.click();
+                    }
+                });
+            }
+            if (finishBtn) {
+                finishBtn.addEventListener('click', () => BlockDragDrop.setEditMode(false));
+            }
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    if (confirm('Isso vai restaurar a ordem padrão de todos os blocos do painel. Deseja continuar?')) {
+                        BlockDragDrop.resetAll();
+                    }
+                });
+            }
         }
 
         window.addEventListener('DOMContentLoaded', init);
