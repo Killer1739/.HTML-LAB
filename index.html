@@ -195,10 +195,39 @@
             .main-content { margin-left: 0; padding: 14px; }
         }
 
-        /* ==================================================================
-           OTIMIZAÇÕES PARA MOBILE / iOS (Safari, PWA em tela de início)
-        ================================================================== */
+        /* ESTILOS DE MEDALHAS & CONQUISTAS (NEON / LOCKED) */
+        .badge-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .badge-card.locked {
+            filter: grayscale(100%);
+            opacity: 0.5;
+            border-color: rgba(150, 150, 150, 0.15) !important;
+        }
+        .badge-card.unlocked {
+            filter: grayscale(0%);
+            opacity: 1;
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.25);
+            border-color: rgba(245, 158, 11, 0.5) !important;
+        }
+        .badge-card.unlocked .badge-icon {
+            animation: badgeGlowPulse 2.5s infinite alternate;
+        }
+        @keyframes badgeGlowPulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.4)); }
+            100% { transform: scale(1.08); filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.8)); }
+        }
 
+        /* ANIMAÇÃO DO FOGO DE STREAK */
+        .streak-fire-active {
+            animation: firePulse 1.2s infinite alternate;
+        }
+        @keyframes firePulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 2px #f97316); }
+            100% { transform: scale(1.2) rotate(6deg); filter: drop-shadow(0 0 10px #ef4444); }
+        }
+
+        /* OTIMIZAÇÕES PARA MOBILE / iOS */
         html {
             height: 100%;
             -webkit-text-size-adjust: 100%;
@@ -206,37 +235,31 @@
 
         body {
             min-height: 100%;
-            min-height: 100dvh; /* considera a barra dinâmica do Safari no iOS */
-            overscroll-behavior-y: none; /* evita o "puxão" de recarregar/mostrar fundo no bounce */
+            min-height: 100dvh;
+            overscroll-behavior-y: none;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Remove o retângulo cinza que o iOS mostra ao tocar em links/botões */
         * {
             -webkit-tap-highlight-color: transparent;
         }
 
         a, button, .nav-item, label {
-            touch-action: manipulation; /* resposta mais rápida ao toque, sem zoom de duplo-tap */
+            touch-action: manipulation;
         }
 
-        /* O Safari no iOS dá zoom automático ao focar em <input>/<select> com fonte < 16px.
-           Forçamos 16px apenas em telas pequenas para impedir esse zoom indesejado. */
         @media (max-width: 768px) {
             input, select, textarea {
                 font-size: 16px !important;
             }
         }
 
-        /* Scroll nativo (inercial) e sem "vazamento" de rolagem para o fundo da página,
-           dentro de listas, tabelas e modais */
         [class~="overflow-y-auto"],
         [class~="overflow-x-auto"] {
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
         }
 
-        /* Respeita a área segura (notch, Dynamic Island e barra de gestos) do iPhone */
         .sidebar {
             padding-top: max(20px, env(safe-area-inset-top));
             padding-left: max(20px, env(safe-area-inset-left));
@@ -257,8 +280,6 @@
             }
         }
 
-        /* Modais: respeitam a área segura e não deixam a página de fundo rolar/"vazar"
-           quando o teclado do iOS abre ou durante o bounce de rolagem */
         #profileModal, #profileLoginModal, #novaMetaModal, #contribuirMetaModal,
         #novoCartaoModal, #novaTransacaoModal, #historyModal, #editModal,
         #novaAssinaturaModal, #categoryModal, #infoModal, #githubSyncModal {
@@ -275,16 +296,11 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        /* ==================================================================
-           DOCK DE NAVEGAÇÃO INFERIOR (estilo "dock" para mobile/tablet),
-           reaproveitando as cores do projeto (glass-panel / nav-item)
-        ================================================================== */
         .bottom-dock {
-            display: none; /* só aparece em telas <= 1024px, ver media query abaixo */
+            display: none;
         }
 
         @media (max-width: 1024px) {
-            /* O menu horizontal antigo (dentro da sidebar) some, pois vira a dock inferior */
             .sidebar .nav-menu {
                 display: none;
             }
@@ -330,7 +346,6 @@
                 font-weight: 600;
             }
 
-            /* Garante espaço no fim da página para a dock flutuante não cobrir conteúdo */
             .main-content {
                 padding-bottom: max(96px, calc(env(safe-area-inset-bottom) + 84px)) !important;
             }
@@ -346,12 +361,8 @@
             }
         }
 
-        /* ==================================================================
-           MENU DE AÇÕES DO CABEÇALHO (Tema/Histórico/Limpar/Backup/Importar/Privacidade)
-           Desktop: barra de ícones (como antes). Mobile: menu "kebab" compacto.
-        ================================================================== */
         .header-more-btn {
-            display: none; /* só aparece em telas menores, ver media query abaixo */
+            display: none;
         }
 
         .header-actions-group {
@@ -381,7 +392,7 @@
         }
         .header-action-btn:hover { background: rgba(150, 150, 150, 0.12); }
         .header-action-btn i { font-size: 12px; }
-        .header-action-btn span { display: none; } /* rótulos só aparecem no dropdown mobile */
+        .header-action-btn span { display: none; }
 
         @media (max-width: 1023px) {
             .header-more-btn {
@@ -427,7 +438,6 @@
             .header-action-btn span { display: inline; font-size: 12px; font-weight: 500; }
         }
 
-        /* Alvos de toque maiores em telas pequenas — Apple recomenda mín. 44x44px */
         @media (max-width: 640px) {
             header button,
             header label,
@@ -516,6 +526,7 @@
                         <li><a class="nav-item flex items-center gap-2 lg:gap-3.5 p-2 lg:p-2.5 rounded-2xl text-xs lg:text-sm" data-target="view-ganhos" data-title="Relatório de Ganhos"><i class="fa-solid fa-arrow-trend-up w-4 text-center"></i> Ganhos</a></li>
                         <li><a class="nav-item flex items-center gap-2 lg:gap-3.5 p-2 lg:p-2.5 rounded-2xl text-xs lg:text-sm" data-target="view-cartoes" data-title="Gerenciar Cartões"><i class="fa-regular fa-credit-card w-4 text-center"></i> Cartões</a></li>
                         <li><a class="nav-item flex items-center gap-2 lg:gap-3.5 p-2 lg:p-2.5 rounded-2xl text-xs lg:text-sm" data-target="view-metas" data-title="Metas & Objetivos"><i class="fa-solid fa-bullseye w-4 text-center"></i> Metas</a></li>
+                        <li><a class="nav-item flex items-center gap-2 lg:gap-3.5 p-2 lg:p-2.5 rounded-2xl text-xs lg:text-sm" data-target="view-conquistas" data-title="Galeria de Conquistas"><i class="fa-solid fa-award w-4 text-center"></i> Conquistas</a></li>
                         <li><a class="nav-item flex items-center gap-2 lg:gap-3.5 p-2 lg:p-2.5 rounded-2xl text-xs lg:text-sm" data-target="view-assinaturas" data-title="Assinaturas & Fixas"><i class="fa-solid fa-file-invoice-dollar w-4 text-center"></i> Assinaturas</a></li>
                         <li><a class="nav-item flex items-center gap-2 lg:gap-3.5 p-2 lg:p-2.5 rounded-2xl text-xs lg:text-sm" data-target="view-orcamentos" data-title="Orçamentos & Limites"><i class="fa-solid fa-sliders w-4 text-center"></i> Orçamentos</a></li>
                     </ul>
@@ -531,6 +542,7 @@
                 <li><a class="nav-item" data-target="view-ganhos" data-title="Relatório de Ganhos"><i class="fa-solid fa-arrow-trend-up"></i><span>Ganhos</span></a></li>
                 <li><a class="nav-item" data-target="view-cartoes" data-title="Gerenciar Cartões"><i class="fa-regular fa-credit-card"></i><span>Cartões</span></a></li>
                 <li><a class="nav-item" data-target="view-metas" data-title="Metas & Objetivos"><i class="fa-solid fa-bullseye"></i><span>Metas</span></a></li>
+                <li><a class="nav-item" data-target="view-conquistas" data-title="Galeria de Conquistas"><i class="fa-solid fa-award"></i><span>Conquistas</span></a></li>
                 <li><a class="nav-item" data-target="view-assinaturas" data-title="Assinaturas & Fixas"><i class="fa-solid fa-file-invoice-dollar"></i><span>Assinaturas</span></a></li>
                 <li><a class="nav-item" data-target="view-orcamentos" data-title="Orçamentos & Limites"><i class="fa-solid fa-sliders"></i><span>Orçamentos</span></a></li>
             </ul>
@@ -546,6 +558,16 @@
 
                 <div class="flex flex-col lg:flex-row lg:items-center gap-2 w-full lg:w-auto">
                     <div class="flex items-center justify-between lg:justify-start gap-2 w-full lg:w-auto">
+                        
+                        <!-- NOVO INDICADOR DE SEQUÊNCIA / STREAKS 🔥 -->
+                        <div id="headerStreakBadge" class="flex items-center gap-2 px-3 py-2 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 shadow-sm transition hover:scale-105 cursor-pointer shrink-0" title="Sequência de meses seguidos fechando no azul!">
+                            <span id="streakFireIcon" class="text-base streak-fire-active">🔥</span>
+                            <div class="flex flex-col leading-none">
+                                <span class="text-[9px] font-bold uppercase tracking-wider opacity-80">Sequência</span>
+                                <span id="headerStreakCount" class="text-xs lg:text-sm font-extrabold">0 meses</span>
+                            </div>
+                        </div>
+
                         <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 backdrop-blur-md p-1.5 rounded-2xl border border-black/10 dark:border-white/10 shadow-sm flex-1 lg:flex-none min-w-0">
                             <button id="prevMonthBtn" class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl transition shrink-0"><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
                             <input type="month" id="currentMonthInput" class="bg-transparent font-semibold text-xs lg:text-sm outline-none px-1 cursor-pointer [color-scheme:dark] w-full lg:w-auto min-w-0 text-center lg:text-left">
@@ -752,12 +774,10 @@
                             <p class="text-[11px] opacity-70" id="projectionSubtitle">Baseado no seu padrão de economia recente</p>
                         </div>
                         <div class="flex items-center gap-3">
-                            <!-- Alternar visualização (Gráfico / Tabela) -->
                             <div class="flex gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl">
                                 <button type="button" id="projViewChart" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] transition shadow-sm" title="Ver Gráfico"><i class="fa-solid fa-chart-line"></i></button>
                                 <button type="button" id="projViewTable" class="px-2.5 py-1.5 rounded-lg opacity-70 text-[10px] transition hover:opacity-100" title="Ver Tabela"><i class="fa-solid fa-table"></i></button>
                             </div>
-                            <!-- Alternar tempo -->
                             <div class="flex gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl">
                                 <button type="button" id="projTab6m" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] transition shadow-sm">6 Meses</button>
                                 <button type="button" id="projTab12m" class="px-3 py-1.5 rounded-lg opacity-70 text-[10px] transition hover:opacity-100">12 Meses</button>
@@ -765,12 +785,10 @@
                         </div>
                     </div>
                     
-                    <!-- Wrapper do Gráfico -->
                     <div id="projectionChartWrapper" class="relative h-56 sm:h-64 w-full">
                         <canvas id="projectionChart"></canvas>
                     </div>
                     
-                    <!-- Wrapper da Tabela (Oculto por padrão) -->
                     <div id="projectionTableWrapper" class="hidden relative h-56 sm:h-64 w-full overflow-y-auto pr-2">
                         <table class="w-full text-left text-xs">
                             <thead class="sticky top-0 bg-[var(--dropdown-bg)] backdrop-blur-xl border-b border-black/10 dark:border-white/10 opacity-80 z-10">
@@ -781,7 +799,6 @@
                                 </tr>
                             </thead>
                             <tbody id="projectionTableBody">
-                                <!-- Preenchido via JS -->
                             </tbody>
                         </table>
                     </div>
@@ -903,6 +920,26 @@
                         <h3 class="font-bold text-base mb-1">Nenhuma meta cadastrada</h3>
                         <p class="text-xs opacity-70">Crie seu primeiro objetivo e comece a poupar.</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- ==============================================
+                 NOVA VIEW 8: GALERIA DE CONQUISTAS 🏅
+            ================================================ -->
+            <div id="view-conquistas" class="view-section flex-col gap-5 w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div>
+                        <h2 class="text-lg font-bold flex items-center gap-2">Galeria de Conquistas 🏅</h2>
+                        <p class="text-xs opacity-70">Bata as metas financeiras e ative o brilho neon das suas medalhas!</p>
+                    </div>
+                    <div class="px-3 py-1.5 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs font-semibold flex items-center gap-2">
+                        <span class="opacity-70">Desbloqueadas:</span>
+                        <span id="unlockedBadgesCount" class="text-amber-500 font-bold">0/6</span>
+                    </div>
+                </div>
+
+                <div id="badgesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Preenchido dinamicamente via JS -->
                 </div>
             </div>
 
@@ -1330,7 +1367,6 @@
     </div>
 
     <script>
-        // --- FUNÇÃO AUXILIAR DE DATA LOCAL CORRETA ---
         function getLocalTodayDate() {
             const d = new Date();
             const year = d.getFullYear();
@@ -1508,12 +1544,12 @@
             userDropdownMenu.classList.add('hidden');
         });
 
-        // Menu "mais ações" do cabeçalho (versão compacta para mobile)
+        // Menu "mais ações" do cabeçalho
         const headerActionsGroup = document.getElementById('actionsGroup');
         const moreActionsBtn = document.getElementById('moreActionsBtn');
 
         function positionHeaderActionsGroup() {
-            if (window.innerWidth >= 1024) return; // no desktop o menu é uma barra estática, não precisa posicionar
+            if (window.innerWidth >= 1024) return;
             const rect = moreActionsBtn.getBoundingClientRect();
             const menuWidth = headerActionsGroup.offsetWidth || 200;
             const margin = 12;
@@ -1652,6 +1688,7 @@
                 if(targetId === 'view-ganhos') updateGainsTabView();
                 if(targetId === 'view-cartoes') renderCardsView();
                 if(targetId === 'view-metas') renderGoalsView();
+                if(targetId === 'view-conquistas') renderBadgesView();
                 if(targetId === 'view-assinaturas') renderSubscriptionsView();
                 if(targetId === 'view-orcamentos') renderBudgetsView();
             });
@@ -1799,6 +1836,170 @@
                 setTimeout(() => toast.classList.remove('scale-95', 'opacity-0'), 10);
                 setTimeout(() => { toast.classList.add('scale-95', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 3500);
             }, 250);
+        }
+
+        // --- SISTEMA DE SEQUÊNCIAS (STREAKS 🔥) E CONQUISTAS / MEDALHAS 🏅 ---
+        function calculateStreak() {
+            const sortedMonths = Object.keys(dbData.months).sort().reverse();
+            let streak = 0;
+
+            for (let i = 0; i < sortedMonths.length; i++) {
+                const mStr = sortedMonths[i];
+                const m = dbData.months[mStr];
+                
+                const inc = getMonthTotalIncome(mStr);
+                const exp = (m.expenses || []).reduce((acc, curr) => acc + curr.value, 0);
+                
+                // Se o mês tem algum lançamento
+                if (inc > 0 || exp > 0) {
+                    if (inc > exp) {
+                        streak++;
+                    } else {
+                        break; // Sequência interrompida se fechou no vermelho
+                    }
+                }
+            }
+            return streak;
+        }
+
+        function updateStreakHeader() {
+            const streakCount = calculateStreak();
+            const countEl = document.getElementById('headerStreakCount');
+            const fireIcon = document.getElementById('streakFireIcon');
+            const badgeEl = document.getElementById('headerStreakBadge');
+
+            if (countEl) countEl.textContent = `${streakCount} mes${streakCount !== 1 ? 'es' : 'mês'}`;
+            
+            if (streakCount > 0) {
+                fireIcon.className = "text-base streak-fire-active";
+                badgeEl.className = "flex items-center gap-2 px-3 py-2 rounded-2xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-orange-500/40 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.3)] transition hover:scale-105 cursor-pointer shrink-0";
+            } else {
+                fireIcon.className = "text-base opacity-40 grayscale";
+                badgeEl.className = "flex items-center gap-2 px-3 py-2 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-muted transition opacity-70 shrink-0";
+            }
+        }
+
+        function renderBadgesView() {
+            const grid = document.getElementById('badgesGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const stats = calculateStats();
+            const currentStreak = calculateStreak();
+            const income = stats.income;
+            const exp = stats.total;
+            const rem = stats.remaining;
+
+            // Lógica das medalhas
+            const isMaoDeVaca = income > 0 && (exp / income) <= 0.5;
+            const isRegraDeOuro = income > 0 && (rem / income) >= 0.2;
+            
+            // Mestre do Orçamento: Tem ao menos 1 orçamento configurado e NENHUM estourado
+            let hasBudget = dbData.categoryBudgets && Object.keys(dbData.categoryBudgets).length > 0;
+            let budgetExceeded = false;
+            if (hasBudget) {
+                let spentByCategory = {};
+                (dbData.months[currentMonth].expenses || []).forEach(e => { spentByCategory[e.category] = (spentByCategory[e.category] || 0) + e.value; });
+                Object.keys(dbData.categoryBudgets).forEach(cat => {
+                    const limit = dbData.categoryBudgets[cat] || 0;
+                    if (limit > 0 && (spentByCategory[cat] || 0) > limit) budgetExceeded = true;
+                });
+            }
+            const isMestreOrcamento = hasBudget && !budgetExceeded;
+            
+            const isInquebravel = currentStreak >= 3;
+            const isPoupeiroProfissional = rem >= 1000;
+            const isVisaoDeFuturo = dbData.goals && dbData.goals.length >= 1;
+
+            const badges = [
+                {
+                    id: 'mao_de_vaca',
+                    title: 'Mão de Vaca 🧼',
+                    category: 'Economia Rígida',
+                    description: 'Gasteu 50% ou menos da sua renda mensal no mês atual.',
+                    unlocked: isMaoDeVaca,
+                    icon: '🧼',
+                    badgeColor: 'from-blue-600/30 to-cyan-500/30 border-cyan-500/50 text-cyan-400'
+                },
+                {
+                    id: 'regra_de_ouro',
+                    title: 'Regra de Ouro 📐',
+                    category: 'Poupança Inteligente',
+                    description: 'Siga o método 50/30/20 ou poupe mais de 20% da renda.',
+                    unlocked: isRegraDeOuro,
+                    icon: '📐',
+                    badgeColor: 'from-amber-500/30 to-yellow-500/30 border-amber-500/50 text-amber-400'
+                },
+                {
+                    id: 'mestre_orcamento',
+                    title: 'Mestre do Orçamento 🎯',
+                    category: 'Controle Total',
+                    description: 'Crie tetos de gastos e mantenha todas as categorias sob controle.',
+                    unlocked: isMestreOrcamento,
+                    icon: '🎯',
+                    badgeColor: 'from-emerald-500/30 to-teal-500/30 border-emerald-500/50 text-emerald-400'
+                },
+                {
+                    id: 'inquebravel',
+                    title: 'Inquebravel ⚡',
+                    category: 'Consistência',
+                    description: 'Mantenha uma sequência de 3 ou mais meses seguidos no azul!',
+                    unlocked: isInquebravel,
+                    icon: '⚡',
+                    badgeColor: 'from-purple-600/30 to-indigo-500/30 border-indigo-500/50 text-indigo-400'
+                },
+                {
+                    id: 'poupeiro_pro',
+                    title: 'Poupeiro Profissional 🐷',
+                    category: 'Reserva Acumulada',
+                    description: 'Consiga uma Sobra Livre de mais de R$ 1.000,00 no mês.',
+                    unlocked: isPoupeiroProfissional,
+                    icon: '🐷',
+                    badgeColor: 'from-pink-500/30 to-rose-500/30 border-rose-500/50 text-rose-400'
+                },
+                {
+                    id: 'visao_futuro',
+                    title: 'Visão de Futuro 🚀',
+                    category: 'Planejamento',
+                    description: 'Cadastre pelo menos 1 Meta ou Objetivo pessoal no painel.',
+                    unlocked: isVisaoDeFuturo,
+                    icon: '🚀',
+                    badgeColor: 'from-violet-600/30 to-fuchsia-500/30 border-fuchsia-500/50 text-fuchsia-400'
+                }
+            ];
+
+            const unlockedCount = badges.filter(b => b.unlocked).length;
+            document.getElementById('unlockedBadgesCount').textContent = `${unlockedCount}/${badges.length}`;
+
+            badges.forEach(b => {
+                const card = document.createElement('div');
+                const statusClass = b.unlocked ? 'unlocked' : 'locked';
+                const bgGradient = b.unlocked ? `bg-gradient-to-br ${b.badgeColor}` : 'bg-black/5 dark:bg-white/5';
+
+                card.className = `badge-card ${statusClass} glass-panel p-5 flex flex-col justify-between border relative overflow-hidden`;
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="w-12 h-12 rounded-2xl ${bgGradient} border flex items-center justify-center text-2xl shadow-lg shrink-0 badge-icon">
+                            ${b.icon}
+                        </div>
+                        <span class="text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-full ${b.unlocked ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-black/10 dark:bg-white/10 opacity-60'}">
+                            ${b.unlocked ? 'Desbloqueada' : 'Bloqueada'}
+                        </span>
+                    </div>
+
+                    <div>
+                        <span class="text-[10px] font-semibold opacity-60 block uppercase">${b.category}</span>
+                        <h3 class="text-sm font-bold mt-0.5 mb-1">${b.title}</h3>
+                        <p class="text-xs opacity-75 leading-relaxed">${b.description}</p>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-black/10 dark:border-white/10 flex items-center gap-1.5 text-[10px] opacity-70">
+                        <i class="fa-solid ${b.unlocked ? 'fa-circle-check text-emerald-400' : 'fa-lock text-slate-400'}"></i>
+                        <span>${b.unlocked ? 'Conquista ativada no seu perfil!' : 'Meta pendente de atingimento'}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
         }
 
         // --- ENHANCED AI NATURAL LANGUAGE PARSER & INSTALLMENTS ENGINE ---
@@ -2018,7 +2219,7 @@
                 extratoView.classList.remove('hidden');
                 searchWrapper.style.display = 'flex';
                 raioXView.classList.add('hidden');
-                raioXView.style.display = 'none'; // Correção para não manter o 'flex' visível
+                raioXView.style.display = 'none';
             });
 
             subTabRaioX.addEventListener('click', () => {
@@ -2064,7 +2265,6 @@
                 updateNetWorthChart();
             });
 
-            // Lógica de alternância da Projeção Futura (Tempo & Visualização)
             const projTab6m = document.getElementById('projTab6m');
             const projTab12m = document.getElementById('projTab12m');
             const projViewChartBtn = document.getElementById('projViewChart');
@@ -2258,7 +2458,6 @@
             let totalSavings = 0;
             let count = 0;
             
-            // Pega os últimos 3 meses pra basear a projeção de economia média (fluxo de caixa)
             for(let i = 0; i < Math.min(3, sortedMonths.length); i++) {
                 const mStr = sortedMonths[i];
                 const inc = getMonthTotalIncome(mStr);
@@ -2267,7 +2466,6 @@
                 count++;
             }
             
-            // Se não tiver nenhum histórico no DB, projeta com base no mês atual
             if (count === 0) {
                 const currentInc = getMonthTotalIncome(currentMonth);
                 const currentExp = (dbData.months[currentMonth].expenses || []).reduce((a, b) => a + b.value, 0);
@@ -2309,11 +2507,10 @@
                 data.push(currentBalance);
             }
             
-            // Atualizar o Gráfico
             const tickColor = htmlElement.classList.contains('dark') ? '#cbd5e1' : '#475569';
             const gridColor = htmlElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
             const isPositive = avgSavings >= 0;
-            const lineColor = isPositive ? '#10b981' : '#f43f5e'; // emerald or rose
+            const lineColor = isPositive ? '#10b981' : '#f43f5e';
             
             if (projectionChartInstance) {
                 projectionChartInstance.data.labels = labels;
@@ -2381,7 +2578,6 @@
                 });
             }
 
-            // Atualizar a Tabela
             const tbody = document.getElementById('projectionTableBody');
             tbody.innerHTML = '';
             
@@ -2741,6 +2937,7 @@
             }
             saveDB();
             renderBudgetsView();
+            renderBadgesView();
         }
 
         function renderGoalsView() {
@@ -2966,7 +3163,7 @@
 
         function getWeeklySpent() {
             const today = new Date();
-            const currentDay = today.getDay(); // 0 (Dom) a 6 (Sáb)
+            const currentDay = today.getDay();
             const startOfWeek = new Date(today);
             startOfWeek.setDate(today.getDate() - currentDay);
             
@@ -2996,6 +3193,8 @@
             renderGoalsView();
             renderSubscriptionsView();
             renderBudgetsView();
+            updateStreakHeader();
+            renderBadgesView();
             if (activeSubTab === 'raiox') renderRaioXView();
             const stats = calculateStats();
             updateKPIs(stats); update503020(stats); updateDynamicStatus(stats);
@@ -3632,9 +3831,6 @@
             const fileName = `findash_backup_${currentMonth}.json`;
             const blob = new Blob([JSON.stringify(dbData, null, 2)], { type: 'application/json' });
 
-            // No iOS, quando o site é adicionado à Tela de Início (modo "standalone"), não existe
-            // interface do Safari para processar downloads — por isso usamos a folha de
-            // compartilhamento nativa (Web Share API), que permite "Salvar em Arquivos".
             try {
                 const file = new File([blob], fileName, { type: 'application/json' });
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -3642,11 +3838,9 @@
                     return;
                 }
             } catch (err) {
-                if (err && err.name === 'AbortError') return; // usuário cancelou o compartilhamento
-                // qualquer outro erro cai no fallback abaixo
+                if (err && err.name === 'AbortError') return;
             }
 
-            // Fallback para navegadores comuns (Safari em aba normal, Chrome, etc.)
             const url = URL.createObjectURL(blob);
             const dl = document.createElement('a');
             dl.href = url;
@@ -3664,7 +3858,6 @@
             reader.readAsText(file);
         }
 
-        // --- SINCRONIZAÇÃO COM GITHUB (armazena o backup como um arquivo JSON num repositório) ---
         function getGithubConfig() {
             return JSON.parse(localStorage.getItem('findash_github_config')) || {};
         }
@@ -3677,7 +3870,6 @@
             el.textContent = msg;
             el.className = 'text-xs mt-3 ' + (isError ? 'text-rose-500' : 'text-emerald-500');
         }
-        // Codifica/decodifica em Base64 preservando acentos e caracteres especiais (UTF-8)
         function b64EncodeUnicode(str) {
             return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode('0x' + p1)));
         }
