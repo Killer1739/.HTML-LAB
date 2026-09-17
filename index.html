@@ -543,10 +543,10 @@
             transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
         }
         .edit-mode-bar.visible {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
+            transform: translateX(-50%) translateY(0) !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
         }
         .edit-mode-bar-text { font-size: 11px; opacity: 0.85; max-width: 320px; }
         .edit-mode-bar-btn {
@@ -574,6 +574,92 @@
             .edit-mode-bar { bottom: 90px; transform: translateX(-50%) translateY(200px); }
             .edit-mode-bar.visible { transform: translateX(-50%) translateY(0); }
         }
+    
+        /* ALTA VISIBILIDADE EM MODAIS E POPUPS (TEMA CLARO E TEMA ESCURO) */
+        .fixed .glass-panel,
+        [id*="Modal"] .glass-panel,
+        [id*="modal"] .glass-panel {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border: 1px solid rgba(0, 0, 0, 0.14) !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+        }
+        .dark .fixed .glass-panel,
+        .dark [id*="Modal"] .glass-panel,
+        .dark [id*="modal"] .glass-panel {
+            background: rgba(15, 23, 42, 0.95) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75) !important;
+        }
+        /* Campos de entrada e seleção dentro dos modais */
+        .fixed .glass-panel input,
+        .fixed .glass-panel select,
+        .fixed .glass-panel textarea,
+        [id*="Modal"] input,
+        [id*="Modal"] select,
+        [id*="Modal"] textarea {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+            border-color: #cbd5e1 !important;
+            font-weight: 500;
+        }
+        .fixed .glass-panel input::placeholder,
+        .fixed .glass-panel textarea::placeholder,
+        [id*="Modal"] input::placeholder,
+        [id*="Modal"] textarea::placeholder {
+            color: #64748b !important;
+            opacity: 1 !important;
+        }
+        .fixed .glass-panel input:focus,
+        .fixed .glass-panel select:focus,
+        .fixed .glass-panel textarea:focus,
+        [id*="Modal"] input:focus,
+        [id*="Modal"] select:focus,
+        [id*="Modal"] textarea:focus {
+            background: #ffffff !important;
+            border-color: #4f46e5 !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+        }
+        .dark .fixed .glass-panel input,
+        .dark .fixed .glass-panel select,
+        .dark .fixed .glass-panel textarea,
+        .dark [id*="Modal"] input,
+        .dark [id*="Modal"] select,
+        .dark [id*="Modal"] textarea {
+            background: rgba(255, 255, 255, 0.06) !important;
+            color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.14) !important;
+        }
+        .dark .fixed .glass-panel input:focus,
+        .dark .fixed .glass-panel select:focus,
+        .dark .fixed .glass-panel textarea:focus,
+        .dark [id*="Modal"] input:focus,
+        .dark [id*="Modal"] select:focus,
+        .dark [id*="Modal"] textarea:focus {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-color: #818cf8 !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3) !important;
+        }
+        /* Barra de personalização no tema claro */
+        html:not(.dark) .edit-mode-bar {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border: 1px solid rgba(0, 0, 0, 0.16) !important;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.16) !important;
+        }
+        html:not(.dark) .edit-mode-bar-btn {
+            background: rgba(0, 0, 0, 0.07) !important;
+            color: #1e293b !important;
+        }
+        html:not(.dark) .edit-mode-bar-btn:hover {
+            background: rgba(0, 0, 0, 0.12) !important;
+        }
+        html:not(.dark) .edit-mode-bar-btn.primary {
+            background: #4f46e5 !important;
+            color: #ffffff !important;
+        }
+
     </style>
 </head>
 <body class="antialiased">
@@ -1964,12 +2050,38 @@
             setTimeout(() => {
                 const toast = document.createElement('div');
                 const isGain = type === 'gain';
-                const neonStyle = isGain ? 'bg-emerald-500/25 text-emerald-200 border-2 border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-rose-500/25 text-rose-200 border-2 border-rose-500/50 shadow-[0_0_20px_rgba(244,63,94,0.4)]';
+                const isDark = document.documentElement.classList.contains('dark');
                 
-                toast.className = `fixed z-[300] flex items-center gap-3 p-4 rounded-2xl backdrop-blur-xl transition-all duration-300 transform -translate-x-1/2 -translate-y-1/2 scale-95 opacity-0 max-w-sm w-[90%] ${neonStyle}`;
+                let themeClasses = "";
+                let titleClass = "";
+                let msgClass = "";
+                
+                if (isGain) {
+                    if (isDark) {
+                        themeClasses = "bg-emerald-950/95 text-emerald-100 border-2 border-emerald-400 shadow-[0_0_30px_rgba(52,211,153,0.5)]";
+                        titleClass = "text-emerald-300 font-extrabold";
+                        msgClass = "text-emerald-100 font-medium";
+                    } else {
+                        themeClasses = "bg-white text-emerald-950 border-2 border-emerald-600 shadow-[0_18px_40px_rgba(5,150,105,0.28)] ring-2 ring-emerald-500/20";
+                        titleClass = "text-emerald-800 font-extrabold";
+                        msgClass = "text-emerald-900 font-medium";
+                    }
+                } else {
+                    if (isDark) {
+                        themeClasses = "bg-rose-950/95 text-rose-100 border-2 border-rose-400 shadow-[0_0_30px_rgba(251,113,133,0.5)]";
+                        titleClass = "text-rose-300 font-extrabold";
+                        msgClass = "text-rose-100 font-medium";
+                    } else {
+                        themeClasses = "bg-white text-rose-950 border-2 border-rose-600 shadow-[0_18px_40px_rgba(225,29,72,0.28)] ring-2 ring-rose-500/20";
+                        titleClass = "text-rose-800 font-extrabold";
+                        msgClass = "text-rose-900 font-medium";
+                    }
+                }
+                
+                toast.className = `fixed z-[300] flex items-center gap-3.5 p-4 rounded-2xl backdrop-blur-2xl transition-all duration-300 transform -translate-x-1/2 -translate-y-1/2 scale-95 opacity-0 max-w-sm w-[90%] ${themeClasses}`;
                 const iconHtml = isGain ? `<div class="text-2xl animate-bounce">✅</div>` : `<div class="text-2xl animate-pulse">⛔</div>`;
                     
-                toast.innerHTML = `<div class="shrink-0">${iconHtml}</div><div><h4 class="font-bold text-sm uppercase">${title}</h4><p class="text-xs mt-1 opacity-90">${message}</p></div>`;
+                toast.innerHTML = `<div class="shrink-0">${iconHtml}</div><div><h4 class="text-sm uppercase tracking-wide ${titleClass}">${title}</h4><p class="text-xs mt-1 ${msgClass}">${message}</p></div>`;
                 document.body.appendChild(toast);
                 
                 if (window.visualViewport) {
@@ -4552,22 +4664,31 @@
             const actionsGroup = document.getElementById('actionsGroup');
 
             if (customizeBtn) {
-                customizeBtn.addEventListener('click', () => {
-                    BlockDragDrop.toggleEditMode();
+                customizeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     if (actionsGroup) actionsGroup.classList.remove('open');
-                    const painel = document.getElementById('view-painel');
-                    if (painel && document.body.classList.contains('edit-mode')) {
-                        // Garante que o usuário esteja vendo o painel ao personalizar
-                        document.querySelector('[data-target="view-painel"]')?.click();
+                    
+                    // Se não estiver no painel, abre a aba do painel primeiro
+                    const painelTab = document.querySelector('.nav-item[data-target="view-painel"]');
+                    if (painelTab && !painelTab.classList.contains('active')) {
+                        painelTab.click();
                     }
+                    
+                    BlockDragDrop.toggleEditMode();
                 });
             }
             const closeBtn = document.getElementById('closeEditModeBarBtn');
             if (finishBtn) {
-                finishBtn.addEventListener('click', () => BlockDragDrop.setEditMode(false));
+                finishBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    BlockDragDrop.setEditMode(false);
+                });
             }
             if (closeBtn) {
-                closeBtn.addEventListener('click', () => BlockDragDrop.setEditMode(false));
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    BlockDragDrop.setEditMode(false);
+                });
             }
             if (resetBtn) {
                 resetBtn.addEventListener('click', () => {
@@ -4582,10 +4703,11 @@
                     BlockDragDrop.setEditMode(false);
                 }
             });
-            // Fechar ao navegar para outra aba
+            // Fechar ao navegar para outra aba diferente do painel
             document.querySelectorAll('.nav-item').forEach(nav => {
-                nav.addEventListener('click', () => {
-                    if (document.body.classList.contains('edit-mode')) {
+                nav.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    if (target && target !== 'view-painel' && document.body.classList.contains('edit-mode')) {
                         BlockDragDrop.setEditMode(false);
                     }
                 });
