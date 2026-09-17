@@ -522,7 +522,10 @@
             position: fixed;
             left: 50%;
             bottom: 18px;
-            transform: translateX(-50%) translateY(120%);
+            transform: translateX(-50%) translateY(150px);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
             display: flex;
             align-items: center;
             gap: 14px;
@@ -537,9 +540,14 @@
             border: 1px solid var(--glass-border);
             box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
             z-index: 300;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
         }
-        .edit-mode-bar.visible { transform: translateX(-50%) translateY(0); }
+        .edit-mode-bar.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
         .edit-mode-bar-text { font-size: 11px; opacity: 0.85; max-width: 320px; }
         .edit-mode-bar-btn {
             display: flex;
@@ -563,7 +571,8 @@
         .edit-mode-bar-btn.primary:hover { background: #4338ca; }
 
         @media (max-width: 640px) {
-            .edit-mode-bar { bottom: 90px; }
+            .edit-mode-bar { bottom: 90px; transform: translateX(-50%) translateY(200px); }
+            .edit-mode-bar.visible { transform: translateX(-50%) translateY(0); }
         }
     </style>
 </head>
@@ -786,12 +795,6 @@
 
                 <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 drag-block" data-block-id="timeline-transactions">
                     <div class="drag-handle" title="Arraste para reordenar este bloco"><i class="fa-solid fa-grip-vertical"></i></div>
-                    <div class="glass-panel p-4 lg:p-5">
-                        <h3 class="text-base font-bold mb-3">Evolução Mensal (Barras)</h3>
-                        <div class="relative h-56 sm:h-64 w-full">
-                            <canvas id="timelineChart"></canvas>
-                        </div>
-                    </div>
                     <div class="glass-panel p-4 lg:p-5 flex flex-col">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
                             <h2 class="text-base font-bold">Transações Recentes</h2>
@@ -826,6 +829,12 @@
                                 </div>
                             </div>
                             <div class="grid grid-cols-1 gap-3 max-h-[200px] overflow-y-auto pr-1" id="raioXCardsContainer"></div>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-4 lg:p-5">
+                        <h3 class="text-base font-bold mb-3">Evolução Mensal (Barras)</h3>
+                        <div class="relative h-56 sm:h-64 w-full">
+                            <canvas id="timelineChart"></canvas>
                         </div>
                     </div>
                 </section>
@@ -1492,14 +1501,15 @@
     <!-- ==============================================
          BARRA FLUTUANTE DE PERSONALIZAÇÃO (DRAG & DROP)
     ================================================ -->
-    <div id="editModeBar" class="edit-mode-bar">
+    <div id="editModeBar" class="edit-mode-bar" style="display: none;">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-arrows-up-down-left-right text-indigo-400"></i>
             <span class="edit-mode-bar-text">Modo de personalização ativo. Segure o ícone <i class="fa-solid fa-grip-vertical"></i> em cada bloco e arraste para reorganizar o painel.</span>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-            <button id="resetLayoutBtn" class="edit-mode-bar-btn"><i class="fa-solid fa-rotate-left"></i><span>Restaurar padrão</span></button>
+            <button id="resetLayoutBtn" class="edit-mode-bar-btn" title="Restaurar posições originais"><i class="fa-solid fa-rotate-left"></i><span>Restaurar padrão</span></button>
             <button id="finishEditModeBtn" class="edit-mode-bar-btn primary"><i class="fa-solid fa-check"></i><span>Concluir</span></button>
+            <button id="closeEditModeBarBtn" class="edit-mode-bar-btn" title="Fechar aviso"><i class="fa-solid fa-xmark"></i></button>
         </div>
     </div>
 
@@ -4509,7 +4519,15 @@
             function setEditMode(enabled) {
                 document.body.classList.toggle('edit-mode', enabled);
                 const bar = document.getElementById('editModeBar');
-                if (bar) bar.classList.toggle('visible', enabled);
+                if (bar) {
+                    if (enabled) {
+                        bar.style.display = "flex";
+                        requestAnimationFrame(() => bar.classList.add("visible"));
+                    } else {
+                        bar.classList.remove("visible");
+                        setTimeout(() => { if (!isEditModeOn()) bar.style.display = "none"; }, 300);
+                    }
+                }
             }
 
             function toggleEditMode() {
@@ -4544,8 +4562,12 @@
                     }
                 });
             }
+            const closeBtn = document.getElementById('closeEditModeBarBtn');
             if (finishBtn) {
                 finishBtn.addEventListener('click', () => BlockDragDrop.setEditMode(false));
+            }
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => BlockDragDrop.setEditMode(false));
             }
             if (resetBtn) {
                 resetBtn.addEventListener('click', () => {
@@ -4554,6 +4576,20 @@
                     }
                 });
             }
+            // Fechar ao pressionar a tecla Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.body.classList.contains('edit-mode')) {
+                    BlockDragDrop.setEditMode(false);
+                }
+            });
+            // Fechar ao navegar para outra aba
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.addEventListener('click', () => {
+                    if (document.body.classList.contains('edit-mode')) {
+                        BlockDragDrop.setEditMode(false);
+                    }
+                });
+            });
         }
 
         window.addEventListener('DOMContentLoaded', init);
