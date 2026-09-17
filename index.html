@@ -445,8 +445,45 @@
             .nav-item {
                 min-height: 40px;
             }
+        }
+        /* Botão flutuante redondo de Novo Lançamento */
+        #openNewTransactionBtn {
+            position: fixed !important;
+            right: 24px !important;
+            bottom: 24px !important;
+            width: 58px !important;
+            height: 58px !important;
+            min-height: 58px !important;
+            min-width: 58px !important;
+            border-radius: 9999px !important;
+            background: #4f46e5 !important;
+            color: #ffffff !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            box-shadow: 0 10px 25px -3px rgba(79, 70, 229, 0.5), 0 4px 10px -2px rgba(79, 70, 229, 0.3) !important;
+            z-index: 85 !important;
+            cursor: pointer !important;
+            border: none !important;
+            outline: none !important;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s, box-shadow 0.2s !important;
+        }
+        #openNewTransactionBtn:hover {
+            background: #4338ca !important;
+            transform: scale(1.08) !important;
+            box-shadow: 0 14px 28px -2px rgba(79, 70, 229, 0.6), 0 6px 12px -4px rgba(79, 70, 229, 0.4) !important;
+        }
+        #openNewTransactionBtn:active {
+            transform: scale(0.95) !important;
+        }
+        @media (max-width: 1024px) {
             #openNewTransactionBtn {
-                min-height: 44px;
+                right: 18px !important;
+                bottom: max(88px, calc(env(safe-area-inset-bottom) + 78px)) !important;
+                width: 52px !important;
+                height: 52px !important;
+                min-height: 52px !important;
+                min-width: 52px !important;
             }
             #quickAiForm button[type="submit"] {
                 min-height: 44px;
@@ -800,9 +837,7 @@
                         </div>
                     </div>
 
-                    <button id="openNewTransactionBtn" class="w-full lg:w-auto px-4 py-2.5 lg:px-5 lg:py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-semibold shadow-[0_8px_20px_rgba(79,70,229,0.4)] transition flex items-center justify-center gap-2 text-xs lg:text-sm shrink-0">
-                        <i class="fa-solid fa-plus text-xs"></i> <span class="hidden sm:inline">Nova Transação</span><span class="sm:hidden">Novo</span>
-                    </button>
+                    <!-- Botão de novo lançamento agora é um botão redondo flutuante fixo no canto inferior direito -->
                 </div>
             </header>
 
@@ -1587,6 +1622,11 @@
     <!-- ==============================================
          BARRA FLUTUANTE DE PERSONALIZAÇÃO (DRAG & DROP)
     ================================================ -->
+        <!-- BOTÃO FLUTUANTE REDONDO FIXO: NOVO LANÇAMENTO (+) -->
+    <button id="openNewTransactionBtn" aria-label="Novo Lançamento" title="Novo Lançamento">
+        <i class="fa-solid fa-plus text-2xl"></i>
+    </button>
+
     <div id="editModeBar" class="edit-mode-bar" style="display: none;">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-arrows-up-down-left-right text-indigo-400"></i>
@@ -1638,12 +1678,20 @@
         });
 
         // --- USER PROFILES & PASSWORD LOGIN SYSTEM ---
-        let profilesData = JSON.parse(localStorage.getItem('findash_profiles')) || {
-            currentId: 'default',
-            list: {
-                'default': { id: 'default', name: 'Meu Perfil', avatar: '👤', password: '' }
-            }
-        };
+        let profilesData;
+        try {
+            profilesData = JSON.parse(localStorage.getItem('findash_profiles'));
+        } catch (e) {
+            console.error('Erro ao ler perfis:', e);
+        }
+        if (!profilesData || !profilesData.list || typeof profilesData.list !== 'object') {
+            profilesData = {
+                currentId: 'default',
+                list: {
+                    'default': { id: 'default', name: 'Meu Perfil', avatar: '👤', password: '' }
+                }
+            };
+        }
 
         let currentProfileId = profilesData.currentId || 'default';
         if (!profilesData.list[currentProfileId]) {
@@ -1654,26 +1702,67 @@
             return 'findash_db_' + profileId;
         }
 
-        let dbData = JSON.parse(localStorage.getItem(getProfileDbKey(currentProfileId))) || {
-            categories: {
-                'Moradia': 'needs', 'Alimentação': 'needs', 'Transporte': 'needs',
-                'Saúde': 'needs', 'Lazer': 'wants', 'Compras': 'wants',
-                'Dívidas': 'savings', 'Outros': 'wants'
-            },
-            cards: [],
-            goals: [],
-            categoryBudgets: {},
-            months: {}
-        };
+        function getInitialDbData() {
+            return {
+                categories: {
+                    'Moradia': 'needs', 'Alimentação': 'needs', 'Transporte': 'needs',
+                    'Saúde': 'needs', 'Lazer': 'wants', 'Compras': 'wants',
+                    'Dívidas': 'savings', 'Outros': 'wants'
+                },
+                cards: [],
+                goals: [],
+                categoryBudgets: {},
+                months: {}
+            };
+        }
+
+        function loadProfileDB(profileId) {
+            try {
+                const raw = localStorage.getItem(getProfileDbKey(profileId));
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object' && parsed.months) return parsed;
+                }
+                // Fallback para chave única legada
+                if (profileId === 'default') {
+                    const legacy = localStorage.getItem('findash_db');
+                    if (legacy) {
+                        const parsedLegacy = JSON.parse(legacy);
+                        if (parsedLegacy && typeof parsedLegacy === 'object' && parsedLegacy.months) return parsedLegacy;
+                    }
+                }
+            } catch (e) {
+                console.error('Erro ao carregar dados do perfil:', e);
+            }
+            return getInitialDbData();
+        }
+
+        let dbData = loadProfileDB(currentProfileId);
 
         function saveDB() {
-            localStorage.setItem(getProfileDbKey(currentProfileId), JSON.stringify(dbData));
+            try {
+                const serialized = JSON.stringify(dbData);
+                localStorage.setItem(getProfileDbKey(currentProfileId), serialized);
+                if (currentProfileId === 'default') {
+                    localStorage.setItem('findash_db', serialized);
+                }
+            } catch (e) {
+                console.error('Falha ao salvar no localStorage:', e);
+            }
         }
 
         function saveProfiles() {
-            profilesData.currentId = currentProfileId;
-            localStorage.setItem('findash_profiles', JSON.stringify(profilesData));
+            try {
+                profilesData.currentId = currentProfileId;
+                localStorage.setItem('findash_profiles', JSON.stringify(profilesData));
+            } catch (e) {
+                console.error('Falha ao salvar perfis:', e);
+            }
         }
+
+        // Garante persistência inicial caso seja a primeira abertura
+        saveProfiles();
+        saveDB();
 
         window.switchProfile = function(profileId) {
             if (profilesData.list[profileId]) {
@@ -1699,17 +1788,7 @@
         function executeProfileSwitch(profileId) {
             currentProfileId = profileId;
             saveProfiles();
-            dbData = JSON.parse(localStorage.getItem(getProfileDbKey(currentProfileId))) || {
-                categories: {
-                    'Moradia': 'needs', 'Alimentação': 'needs', 'Transporte': 'needs',
-                    'Saúde': 'needs', 'Lazer': 'wants', 'Compras': 'wants',
-                    'Dívidas': 'savings', 'Outros': 'wants'
-                },
-                cards: [],
-                goals: [],
-                categoryBudgets: {},
-                months: {}
-            };
+            dbData = loadProfileDB(currentProfileId);
             renderUserProfileBox();
             setDefaultDateForCurrentMonth();
             ensureMonthExists(currentMonth);
@@ -1968,7 +2047,13 @@
             setTimeout(() => novaAssinaturaModal.classList.add('hidden'), 300);
         });
 
-        let currentMonth = new Date().toISOString().slice(0, 7);
+        let currentMonth = (function() {
+            try {
+                const saved = localStorage.getItem('findash_active_month');
+                if (saved && /^\d{4}-\d{2}$/.test(saved)) return saved;
+            } catch (e) {}
+            return getLocalTodayDate().slice(0, 7);
+        })();
         let activeTab = 'expense';
         let activeSubTab = 'extrato';
         let raioXTab = 'expense';
@@ -2466,6 +2551,7 @@
 
             currentMonthInput.addEventListener('change', (e) => {
                 currentMonth = e.target.value;
+                try { localStorage.setItem('findash_active_month', currentMonth); } catch (err) {}
                 setDefaultDateForCurrentMonth();
                 ensureMonthExists(currentMonth);
                 updateDashboard();
@@ -2904,6 +2990,7 @@
             if (month > 12) { month = 1; year++; }
             else if (month < 1) { month = 12; year--; }
             currentMonth = `${year}-${String(month).padStart(2, '0')}`;
+            try { localStorage.setItem('findash_active_month', currentMonth); } catch (err) {}
             currentMonthInput.value = currentMonth;
             setDefaultDateForCurrentMonth();
             ensureMonthExists(currentMonth);
@@ -4713,8 +4800,3 @@
                 });
             });
         }
-
-        window.addEventListener('DOMContentLoaded', init);
-    </script>
-</body>
-</html>
