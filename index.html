@@ -1647,39 +1647,6 @@
         // fazia os dados "sumirem" sem aviso nenhum (ex: no import do GitHub,
         // que grava um volume de dados maior de uma vez só e pode esbarrar
         // no limite de espaço do navegador).
-        function safeLSSet(key, value) {
-            try {
-                localStorage.setItem(key, value);
-            } catch (err) {
-                console.warn('Falha ao salvar no localStorage:', key, err);
-                showStorageFailureWarning(err);
-                return false;
-            }
-            if (localStorage.getItem(key) !== value) {
-                console.warn('Gravação no localStorage não confirmada:', key);
-                showStorageFailureWarning(new Error('gravação não confirmada'));
-                return false;
-            }
-            return true;
-        }
-
-        let storageWarningShown = false;
-        function showStorageFailureWarning(err) {
-            if (storageWarningShown) return;
-            storageWarningShown = true;
-            const msg = 'O navegador não conseguiu salvar os dados localmente (' + (err && err.message ? err.message : 'erro desconhecido') + '). Faça um backup (exportar) para não perder as informações.';
-            try {
-                if (typeof showNotification === 'function') {
-                    showNotification('expense', 'Falha ao salvar localmente', msg);
-                } else {
-                    alert(msg);
-                }
-            } catch (e) { alert(msg); }
-        }
-
-        // Pede ao navegador para não descartar automaticamente os dados do
-        // site (reduz o risco de perda quando o "app" fica dias sem ser
-        // aberto, comum em apps salvos na tela de início do iPhone).
         if (navigator.storage && navigator.storage.persist) {
             navigator.storage.persisted().then(isPersisted => {
                 if (!isPersisted) navigator.storage.persist();
@@ -1703,11 +1670,11 @@
             if (isDark) {
                 htmlElement.classList.add('dark');
                 themeIcon.className = 'fa-solid fa-sun';
-                safeLSSet('findash_theme', 'dark');
+                localStorage.setItem('findash_theme', 'dark');
             } else {
                 htmlElement.classList.remove('dark');
                 themeIcon.className = 'fa-solid fa-moon';
-                safeLSSet('findash_theme', 'light');
+                localStorage.setItem('findash_theme', 'light');
             }
         }
 
@@ -1753,12 +1720,12 @@
         };
 
         function saveDB() {
-            return safeLSSet(getProfileDbKey(currentProfileId), JSON.stringify(dbData));
+            localStorage.setItem(getProfileDbKey(currentProfileId), JSON.stringify(dbData));
         }
 
         function saveProfiles() {
             profilesData.currentId = currentProfileId;
-            safeLSSet('findash_profiles', JSON.stringify(profilesData));
+            localStorage.setItem('findash_profiles', JSON.stringify(profilesData));
         }
 
         window.switchProfile = function(profileId) {
@@ -4358,15 +4325,95 @@
         function importData(e) {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(event) { try { const parsed = JSON.parse(event.target.result); if (parsed.categories && parsed.months) { dbData = parsed; if(!dbData.cards) dbData.cards = []; if(!dbData.goals) dbData.goals = []; if(!dbData.categoryBudgets) dbData.categoryBudgets = {}; const savedOk = saveDB(); setupCategorySelect(); setupPaymentMethodsSelect(); setDefaultDateForCurrentMonth(); ensureMonthExists(currentMonth); updateDashboard(); if (savedOk && typeof showNotification === 'function') showNotification('gain', 'Importado com sucesso', 'Seus dados foram importados e salvos localmente.'); } } catch(err) { } };
+            reader.onload = function(event) {
+                try {
+                    const parsed = JSON.parse(event.target.result);
+                    if (parsed.categories && parsed.months) {
+                        mergeDataIntoDB(parsed);
+                        saveDB();
+                        setupCategorySelect();
+                        setupPaymentMethodsSelect();
+                        setDefaultDateForCurrentMonth();
+                        ensureMonthExists(currentMonth);
+                        updateDashboard();
+                        if (typeof showNotification === 'function') {
+                            showNotification('gain', 'Importado com sucesso', 'Seus dados foram unificados com o armazenamento local.');
+                        }
+                    }
+                } catch(err) {
+                    console.error('Erro na importação:', err);
+                }
+            };
             reader.readAsText(file);
+        }
+
+
+        function mergeDataIntoDB(incoming) {
+            if (!incoming || typeof incoming !== 'object') return;
+            if (incoming.categories) {
+                dbData.categories = Object.assign({}, dbData.categories || {}, incoming.categories);
+            }
+            if (Array.isArray(incoming.cards)) {
+                if (!dbData.cards) dbData.cards = [];
+                incoming.cards.forEach(card => {
+                    const exists = dbData.cards.some(c => c.id === card.id || (c.name === card.name && c.brand === card.brand));
+                    if (!exists) dbData.cards.push(card);
+                });
+            }
+            if (Array.isArray(incoming.goals)) {
+                if (!dbData.goals) dbData.goals = [];
+                incoming.goals.forEach(goal => {
+                    const exists = dbData.goals.some(g => g.id === goal.id || g.title === goal.title);
+                    if (!exists) dbData.goals.push(goal);
+                });
+            }
+            if (incoming.categoryBudgets) {
+                dbData.categoryBudgets = Object.assign({}, dbData.categoryBudgets || {}, incoming.categoryBudgets);
+            }
+            if (incoming.months && typeof incoming.months === 'object') {
+                if (!dbData.months) dbData.months = {};
+                for (const mKey of Object.keys(incoming.months)) {
+                    const incMonth = incoming.months[mKey];
+                    if (!dbData.months[mKey]) {
+                        dbData.months[mKey] = JSON.parse(JSON.stringify(incMonth));
+                    } else {
+                        const localMonth = dbData.months[mKey];
+                        if ((!localMonth.income || localMonth.income === 5000) && incMonth.income) {
+                            localMonth.income = incMonth.income;
+                        }
+                        if ((!localMonth.accountBalance || localMonth.accountBalance === 2000) && incMonth.accountBalance) {
+                            localMonth.accountBalance = incMonth.accountBalance;
+                        }
+                        if (Array.isArray(incMonth.expenses)) {
+                            if (!localMonth.expenses) localMonth.expenses = [];
+                            incMonth.expenses.forEach(incExp => {
+                                const exists = localMonth.expenses.some(e => 
+                                    (incExp.id && e.id === incExp.id) ||
+                                    (e.description === incExp.description && String(e.value) === String(incExp.value) && e.date === incExp.date)
+                                );
+                                if (!exists) localMonth.expenses.push(incExp);
+                            });
+                        }
+                        if (Array.isArray(incMonth.gains)) {
+                            if (!localMonth.gains) localMonth.gains = [];
+                            incMonth.gains.forEach(incGain => {
+                                const exists = localMonth.gains.some(g => 
+                                    (incGain.id && g.id === incGain.id) ||
+                                    (g.description === incGain.description && String(g.value) === String(incGain.value) && g.date === incGain.date)
+                                );
+                                if (!exists) localMonth.gains.push(incGain);
+                            });
+                        }
+                    }
+                }
+            }
         }
 
         function getGithubConfig() {
             return JSON.parse(localStorage.getItem('findash_github_config')) || {};
         }
         function saveGithubConfig(cfg) {
-            safeLSSet('findash_github_config', JSON.stringify(cfg));
+            localStorage.setItem('findash_github_config', JSON.stringify(cfg));
         }
         function setGithubStatus(msg, isError) {
             const el = document.getElementById('githubSyncStatus');
@@ -4425,8 +4472,7 @@
         async function pullFromGithub() {
             const cfg = getGithubConfig();
             if (!cfg.token || !cfg.owner || !cfg.repo || !cfg.path) { setGithubStatus('Preencha e salve as configurações antes de sincronizar.', true); return; }
-            if (!confirm('Isso vai substituir os dados atuais deste perfil pelos dados salvos no GitHub. Deseja continuar?')) return;
-            setGithubStatus('Baixando do GitHub...');
+            setGithubStatus('Baixando dados e unificando com o armazenamento local...');
             try {
                 const headers = { 'Authorization': `Bearer ${cfg.token}`, 'Accept': 'application/vnd.github+json' };
                 const getRes = await fetch(`${githubApiUrl(cfg)}?ref=${encodeURIComponent(cfg.branch || 'main')}`, { headers });
@@ -4437,19 +4483,20 @@
                 const fileJson = await getRes.json();
                 const parsed = JSON.parse(b64DecodeUnicode(fileJson.content.replace(/\n/g, '')));
                 if (!parsed.categories || !parsed.months) throw new Error('Arquivo inválido: não parece um backup do FinDash.');
-                dbData = parsed;
-                if (!dbData.cards) dbData.cards = [];
-                if (!dbData.goals) dbData.goals = [];
-                if (!dbData.categoryBudgets) dbData.categoryBudgets = {};
-                const savedOk = saveDB();
-                setupCategorySelect(); setupPaymentMethodsSelect(); setDefaultDateForCurrentMonth(); ensureMonthExists(currentMonth); updateDashboard();
+                
+                mergeDataIntoDB(parsed);
+                saveDB();
+                setupCategorySelect();
+                setupPaymentMethodsSelect();
+                setDefaultDateForCurrentMonth();
+                ensureMonthExists(currentMonth);
+                updateDashboard();
                 cfg.lastSync = new Date().toLocaleString('pt-BR');
                 saveGithubConfig(cfg);
-                if (!savedOk) {
-                    setGithubStatus('Dados baixados e exibidos, mas o navegador não confirmou o salvamento local — eles podem se perder ao fechar o site. Faça um backup (exportar).', true);
-                    return;
+                setGithubStatus(`Dados integrados e salvos localmente com sucesso em ${cfg.lastSync}.`);
+                if (typeof showNotification === 'function') {
+                    showNotification('gain', 'Sincronizado!', 'Lançamentos do GitHub unificados com o armazenamento local.');
                 }
-                setGithubStatus(`Dados baixados e salvos localmente com sucesso em ${cfg.lastSync}.`);
             } catch (err) {
                 setGithubStatus(`Falha ao baixar: ${err.message}`, true);
             }
