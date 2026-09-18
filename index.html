@@ -1641,6 +1641,51 @@
 
     <script>
 
+        // --- CAMADA SEGURA DE ARMAZENAMENTO LOCAL ---
+        // Salva no localStorage com confirmação de gravação (lê de volta e
+        // compara) e nunca deixa um erro passar em silêncio — isso é o que
+        // fazia os dados "sumirem" sem aviso nenhum (ex: no import do GitHub,
+        // que grava um volume de dados maior de uma vez só e pode esbarrar
+        // no limite de espaço do navegador).
+        function safeLSSet(key, value) {
+            try {
+                localStorage.setItem(key, value);
+            } catch (err) {
+                console.warn('Falha ao salvar no localStorage:', key, err);
+                showStorageFailureWarning(err);
+                return false;
+            }
+            if (localStorage.getItem(key) !== value) {
+                console.warn('Gravação no localStorage não confirmada:', key);
+                showStorageFailureWarning(new Error('gravação não confirmada'));
+                return false;
+            }
+            return true;
+        }
+
+        let storageWarningShown = false;
+        function showStorageFailureWarning(err) {
+            if (storageWarningShown) return;
+            storageWarningShown = true;
+            const msg = 'O navegador não conseguiu salvar os dados localmente (' + (err && err.message ? err.message : 'erro desconhecido') + '). Faça um backup (exportar) para não perder as informações.';
+            try {
+                if (typeof showNotification === 'function') {
+                    showNotification('expense', 'Falha ao salvar localmente', msg);
+                } else {
+                    alert(msg);
+                }
+            } catch (e) { alert(msg); }
+        }
+
+        // Pede ao navegador para não descartar automaticamente os dados do
+        // site (reduz o risco de perda quando o "app" fica dias sem ser
+        // aberto, comum em apps salvos na tela de início do iPhone).
+        if (navigator.storage && navigator.storage.persist) {
+            navigator.storage.persisted().then(isPersisted => {
+                if (!isPersisted) navigator.storage.persist();
+            }).catch(() => {});
+        }
+
         function getLocalTodayDate() {
             const d = new Date();
             const year = d.getFullYear();
@@ -1658,11 +1703,11 @@
             if (isDark) {
                 htmlElement.classList.add('dark');
                 themeIcon.className = 'fa-solid fa-sun';
-                localStorage.setItem('findash_theme', 'dark');
+                safeLSSet('findash_theme', 'dark');
             } else {
                 htmlElement.classList.remove('dark');
                 themeIcon.className = 'fa-solid fa-moon';
-                localStorage.setItem('findash_theme', 'light');
+                safeLSSet('findash_theme', 'light');
             }
         }
 
@@ -1708,12 +1753,12 @@
         };
 
         function saveDB() {
-            localStorage.setItem(getProfileDbKey(currentProfileId), JSON.stringify(dbData));
+            return safeLSSet(getProfileDbKey(currentProfileId), JSON.stringify(dbData));
         }
 
         function saveProfiles() {
             profilesData.currentId = currentProfileId;
-            localStorage.setItem('findash_profiles', JSON.stringify(profilesData));
+            safeLSSet('findash_profiles', JSON.stringify(profilesData));
         }
 
         window.switchProfile = function(profileId) {
@@ -4313,7 +4358,7 @@
         function importData(e) {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(event) { try { const parsed = JSON.parse(event.target.result); if (parsed.categories && parsed.months) { dbData = parsed; if(!dbData.cards) dbData.cards = []; if(!dbData.goals) dbData.goals = []; if(!dbData.categoryBudgets) dbData.categoryBudgets = {}; saveDB(); setupCategorySelect(); setupPaymentMethodsSelect(); setDefaultDateForCurrentMonth(); ensureMonthExists(currentMonth); updateDashboard(); } } catch(err) { } };
+            reader.onload = function(event) { try { const parsed = JSON.parse(event.target.result); if (parsed.categories && parsed.months) { dbData = parsed; if(!dbData.cards) dbData.cards = []; if(!dbData.goals) dbData.goals = []; if(!dbData.categoryBudgets) dbData.categoryBudgets = {}; const savedOk = saveDB(); setupCategorySelect(); setupPaymentMethodsSelect(); setDefaultDateForCurrentMonth(); ensureMonthExists(currentMonth); updateDashboard(); if (savedOk && typeof showNotification === 'function') showNotification('gain', 'Importado com sucesso', 'Seus dados foram importados e salvos localmente.'); } } catch(err) { } };
             reader.readAsText(file);
         }
 
@@ -4321,7 +4366,7 @@
             return JSON.parse(localStorage.getItem('findash_github_config')) || {};
         }
         function saveGithubConfig(cfg) {
-            localStorage.setItem('findash_github_config', JSON.stringify(cfg));
+            safeLSSet('findash_github_config', JSON.stringify(cfg));
         }
         function setGithubStatus(msg, isError) {
             const el = document.getElementById('githubSyncStatus');
@@ -4396,11 +4441,15 @@
                 if (!dbData.cards) dbData.cards = [];
                 if (!dbData.goals) dbData.goals = [];
                 if (!dbData.categoryBudgets) dbData.categoryBudgets = {};
-                saveDB();
+                const savedOk = saveDB();
                 setupCategorySelect(); setupPaymentMethodsSelect(); setDefaultDateForCurrentMonth(); ensureMonthExists(currentMonth); updateDashboard();
                 cfg.lastSync = new Date().toLocaleString('pt-BR');
                 saveGithubConfig(cfg);
-                setGithubStatus(`Dados baixados com sucesso em ${cfg.lastSync}.`);
+                if (!savedOk) {
+                    setGithubStatus('Dados baixados e exibidos, mas o navegador não confirmou o salvamento local — eles podem se perder ao fechar o site. Faça um backup (exportar).', true);
+                    return;
+                }
+                setGithubStatus(`Dados baixados e salvos localmente com sucesso em ${cfg.lastSync}.`);
             } catch (err) {
                 setGithubStatus(`Falha ao baixar: ${err.message}`, true);
             }
